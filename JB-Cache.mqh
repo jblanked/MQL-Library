@@ -26,11 +26,25 @@ public:
       StringReplace(currentTime," ","");
       ogName = currentTime;
      }
+   
+   // constructor
+   CCache::          CCache(bool universalName)
+     {
+      jaSon = new JSON();
+      string currentTime;
+      if(!universalName) currentTime = TimeToString(TimeCurrent(),TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+      else currentTime = TimeToString(iTime(_Symbol,PERIOD_MN1,0),TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+      StringReplace(currentTime,":","");
+      StringReplace(currentTime,".","");
+      StringReplace(currentTime," ","");
+      StringReplace(currentTime,"-","");
+      ogName = currentTime;
+     }
 
    // deconstructor
    CCache::         ~CCache(void)
      {
-      jaSon.FileDelete();
+      //jaSon.FileDelete();
       delete jaSon;
      }
 
@@ -138,16 +152,6 @@ public:
         }
      }
 
-   bool              get_or_set(const string key, const bool value, const int timeoutInSeconds=15)
-     {
-      if(!this.timeout(key))
-         return this.read_bool(key);
-      else
-        {
-         this.write(key,value,timeoutInSeconds);
-         return value;
-        }
-     }
 
    CJAVal            get_or_set(const string key, CJAVal & value, const int timeoutInSeconds=15)
      {
@@ -181,7 +185,7 @@ public:
 
       this.timeout(key);
       get_result = false;
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
 
       switch(dataType)
         {
@@ -232,7 +236,7 @@ private:
    bool              timeout(const string key)
      {
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileRead();
       tempValue = jaSon.json[key]["timeout"].ToStr();
 
@@ -254,7 +258,7 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileRead();
       jaSon.json[key]["value"] = value;
       jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
@@ -264,7 +268,7 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileRead();
       jaSon.json[key]["value"] = value;
       jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
@@ -275,7 +279,7 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileRead();
       jaSon.json[key]["value"] = value;
       jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
@@ -285,7 +289,7 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.json[key]["value"] = TimeToString(value,TIME_DATE|TIME_MINUTES|TIME_SECONDS);
       jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
       jaSon.FileWrite(true);
@@ -295,8 +299,8 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
-      jaSon.FileRead();
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
+
       jaSon.json[key]["value"] = string(value);
       jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
       jaSon.FileWrite(true);
@@ -306,8 +310,8 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
-      jaSon.FileRead();
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
+
       jaSon.json[key]["value"] = value;
       jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
       jaSon.FileWrite(true);
@@ -316,18 +320,8 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
-      jaSon.FileRead();
-      jaSon.json[key]["value"] = string(value);
-      jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
-      jaSon.FileWrite(true);
-     }
-   void              write(const string key, const bool value, const int timeoutInSeconds=15)
-     {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
-      jaSon.FileRead();
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
+
       jaSon.json[key]["value"] = string(value);
       jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
       jaSon.FileWrite(true);
@@ -336,8 +330,8 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
-      jaSon.FileRead();
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
+
       CJAVal temper = value;
 
       temper[key]["timeout"] = this.timeout(timeoutInSeconds);
@@ -349,7 +343,7 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileRead();
       tempValue = jaSon.json[key]["value"].ToStr();
 
@@ -363,7 +357,7 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileRead();
       tempValue = jaSon.json[key]["value"].ToStr();
 
@@ -377,7 +371,7 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileRead();
       tempValue = jaSon.json[key]["value"].ToStr();
 
@@ -391,7 +385,7 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileRead();
       tempValue = jaSon.json[key]["value"].ToStr();
 
@@ -405,7 +399,7 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileRead();
       tempValue = jaSon.json[key]["value"].ToStr();
 
@@ -419,7 +413,7 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileRead();
       tempValue = jaSon.json[key]["value"].ToStr();
 
@@ -433,7 +427,7 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileRead();
       tempValue = jaSon.json[key]["value"].ToStr();
 
@@ -447,11 +441,11 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileRead();
       tempValue = jaSon.json[key]["value"].ToStr();
-
-      if(tempValue != "" && tempValue != " ")
+      
+      if(tempValue != "" && tempValue != " " && tempValue != None)
          return tempValue == "true" ? true : false;
       else
          return false;
@@ -461,7 +455,7 @@ private:
      {
       this.timeout(key);
       this.clear();
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileRead();
       return jaSon.json;
 
@@ -470,11 +464,11 @@ private:
 
    void              erase(const string key)
      {
-      jaSon.filename = ogName + (string)keyToInt(key) + "-cache.json";
+      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
       jaSon.FileDelete();
      }
 
-   int               keyToInt(const string key)
+   string               keyToInt(const string key)
      {
       char goGet[];
       string opentest;
@@ -482,9 +476,10 @@ private:
 
       for(int i = 0; i < ArraySize(goGet); i++)
         {
-         opentest+=string(goGet[i]);
+         opentest+=CharToString(goGet[i]);
         }
-      return int(opentest);
+      
+      return opentest;
      }
 
 
