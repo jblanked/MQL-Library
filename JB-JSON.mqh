@@ -7,6 +7,9 @@
 #property link      "https://www.jblanked.com/"
 #include <jason_with_search.mqh>
 
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
 class JSON
   {
 private:
@@ -27,6 +30,7 @@ public:
 
    JSON::           ~JSON(void) // deconstructor
      {
+      //FileDelete();
       filehandle = INVALID_HANDLE; // Initialize filehandle to INVALID_HANDLE in the constructor
       filename = "";
       delete json;
