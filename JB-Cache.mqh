@@ -183,7 +183,8 @@ public:
    bool              find(const string key, const ENUM_DATA_TYPE dataType = CJAVAL)
      {
 
-      this.timeout(key);
+      if(this.timeout(key)) return false;
+      
       get_result = false;
       jaSon.filename = keyToInt(key) + ogName + "-cache.json";
 
@@ -240,7 +241,7 @@ private:
       jaSon.FileRead();
       tempValue = jaSon.json[key]["timeout"].ToStr();
 
-      if(StringToTime(tempValue) != 0 && TimeCurrent() >= StringToTime(tempValue))
+      if(StringToTime(tempValue) == 0 || TimeCurrent() >= StringToTime(tempValue))
         {
          this.erase(key);
 
@@ -476,7 +477,7 @@ private:
 
       for(int i = 0; i < ArraySize(goGet); i++)
         {
-         opentest+=CharToString(goGet[i]);
+         opentest+=string(goGet[i]);
         }
       
       return opentest;
