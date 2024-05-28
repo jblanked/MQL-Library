@@ -47,6 +47,11 @@ public:
       //jaSon.FileDelete();
       delete jaSon;
      }
+   
+   void set(const string key, const string value, const int timeoutInSeconds=15)
+   {
+      this.write(key,value,timeoutInSeconds);
+   }
 
    string            get_or_set(const string key, const string value, const int timeoutInSeconds=15)
      {
@@ -63,6 +68,24 @@ public:
         }
      }
 
+   string            get_string(const string key)
+     {
+      this.timeout(key);
+
+      tempValue = this.read_string(key);
+
+      if(tempValue != None && tempValue != " ")
+         return tempValue;
+      else
+        {
+         return None;
+        }
+     }
+   
+   void set(const string key, const int value, const int timeoutInSeconds=15)
+   {
+      this.write(key,value,timeoutInSeconds);
+   }
 
    int               get_or_set(const string key, const int value, const int timeoutInSeconds=15)
      {
@@ -78,6 +101,11 @@ public:
          return value;
         }
      }
+   
+   void set(const string key, const double value, const int timeoutInSeconds=15)
+   {
+      this.write(key,value,timeoutInSeconds);
+   }
 
    double            get_or_set(const string key, const double value, const int timeoutInSeconds=15)
      {
@@ -93,6 +121,11 @@ public:
          return value;
         }
      }
+   
+   void set(const string key, const datetime value, const int timeoutInSeconds=15)
+   {
+      this.write(key,value,timeoutInSeconds);
+   }
 
    datetime            get_or_set(const string key, const datetime value, const int timeoutInSeconds=15)
      {
@@ -108,6 +141,11 @@ public:
          return value;
         }
      }
+   
+   void set(const string key, const ulong value, const int timeoutInSeconds=15)
+   {
+      this.write(key,value,timeoutInSeconds);
+   }
 
    ulong             get_or_set(const string key, const ulong value, const int timeoutInSeconds=15)
      {
@@ -123,6 +161,11 @@ public:
          return value;
         }
      }
+   
+   void set(const string key, const long value, const int timeoutInSeconds=15)
+   {
+      this.write(key,value,timeoutInSeconds);
+   }
 
    long              get_or_set(const string key, const long value, const int timeoutInSeconds=15)
      {
@@ -137,6 +180,11 @@ public:
          return value;
         }
      }
+   
+   void set(const string key, const color value, const int timeoutInSeconds=15)
+   {
+      this.write(key,value,timeoutInSeconds);
+   }
 
    color             get_or_set(const string key, const color value, const int timeoutInSeconds=15)
      {
