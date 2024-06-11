@@ -23,8 +23,12 @@
       // set panel
       if(draw.CreatePanel()) return 1;
       else return -1;
+   
+   4. In OnChartEvent
+      
+      draw.PanelChartEvent(id,lparam,dparam,sparam);
 
-   4. In OnDeInit
+   5. In OnDeInit
 
       delete draw;
 */
@@ -161,36 +165,32 @@ public:
       const int y2 = 5           // Y-2 Position
    );
 
-
-
-
    // constructor
    void              CPanelDraw::CPanelDraw(const string name, const int height = NULL, const int width = NULL)
      {
 
       if(height == NULL)
         {
-         chart_height = (int)ChartGetInteger(0,CHART_HEIGHT_IN_PIXELS);
+         this.chart_height = (int)ChartGetInteger(0,CHART_HEIGHT_IN_PIXELS);
         }
       else
         {
-         chart_height = height;
+         this.chart_height = height;
         }
 
       if(width == NULL)
         {
-         chart_width = (int)(ChartGetInteger(0,CHART_WIDTH_IN_PIXELS)/2.5);
+         this.chart_width = (int)(ChartGetInteger(0,CHART_WIDTH_IN_PIXELS)/2.5);
         }
       else
         {
-         chart_width = width;
+         this.chart_width = width;
         }
 
-      chart_name = name;
+      this.chart_name = name;
 
       // create dialog panel
-      this.Create(NULL,chart_name,0,0,0,chart_width,chart_height);
-
+      this.Create(NULL,this.chart_name,0,0,0,this.chart_width,this.chart_height);
 
      }
 
@@ -204,7 +204,7 @@ public:
      }
 
    // chart event handler
-   void              PanelChartEvent(const int id, const long &lparam, const double &dparam, const string &sparam,string symbol,int magicc_numberr, string orderr_comenttt);
+   void              PanelChartEvent(const int id, const long &lparam, const double &dparam, const string &sparam);
 
    // set panel
    bool              CreatePanel();
@@ -494,3 +494,17 @@ void CPanelDraw::CreateInput(
   }
 
 //+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void CPanelDraw::PanelChartEvent(const int id,const long &lparam,const double &dparam,const string &sparam)
+  {
+// call chart event method of base
+   ChartEvent(id,lparam,dparam,sparam);
+
+// check if button was pressed
+   if(id== CHARTEVENT_OBJECT_CLICK)
+     {
+     
+     }
+  }
