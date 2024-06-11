@@ -67,9 +67,10 @@ class CPanelDraw : public CAppDialog
          const int y2 = 5           // Y-2 Position
     );
     
-    CLabel CreateLabelObject(
-         const string labelName,    // Name of Label 
-         const string labelText,    // Text to be displayed 
+    void CreateLabel(
+         CLabel & labelObject,      // CLabel object to inherit properties
+         const string labelName,    // Name of Label
+         const string labelText,    // Text to be displayed
          const color labelColor,    // Color of the Text
          const int labelFontSize,   // Fontsize of the Text
          const int x1,              // X Position
@@ -90,10 +91,11 @@ class CPanelDraw : public CAppDialog
          const int y2 = 5           // Y-2 Position 
     );
     
-    CLabel CreateLabelObject(
+    void CreateLabel(
+         CLabel & labelObject,      // CLabel object to inherit properties
          const string labelName,    // Name of Label 
          const string labelText,    // Text to be displayed  
-         const color labelColor,    // Color of the Text  
+         const color labelColor,    // Color of the Text 
          const color labelBackgroundColor, // Background Color of the Label
          const int labelFontSize,   // Fontsize of the Text
          const int x1,              // X Position
@@ -102,7 +104,7 @@ class CPanelDraw : public CAppDialog
          const int y2 = 5           // Y-2 Position 
     );
     
-      void CreateButton(
+    void CreateButton(
          const string buttonName,   // Name of Button 
          const string buttonText,   // Text to be displayed  
          const color buttonColor,   // Color of the Text 
@@ -114,16 +116,17 @@ class CPanelDraw : public CAppDialog
          const int y2 = 5           // Y-2 Position
     );
     
-    CButton CreateButtonObject(
+    void CreateButton(
+         CButton & buttonObject,    // CButton object to inherit properties
          const string buttonName,   // Name of Button 
-         const string buttonText,   // Text to be displayed 
-         const color buttonColor,   // Color of the Text  
-         const color buttonBackgroundColor, // Background Color of the Button 
+         const string buttonText,   // Text to be displayed  
+         const color buttonColor,   // Color of the Text 
+         const color buttonBackgroundColor, // Background Color of the Button
          const int buttonFontSize,  // Fontsize of the Text
          const int x1,              // X Position
          const int y1,              // Y Position
          const int x2 = 5,          // X-2 Position
-         const int y2 = 5           // Y-2 Position 
+         const int y2 = 5           // Y-2 Position
     );
     
     void CreateBitmap(
@@ -135,7 +138,8 @@ class CPanelDraw : public CAppDialog
          const int y2 = 5           // Y-2 Position 
     );
     
-    CBmpButton CreateBitmapObject(
+    void CreateBitmap(
+         CBmpButton & bitmapObject,  // CBmpButton object to inherit properties
          const string bitmapName,   // Name of Bitmap
          const string bitmapPath,   // Path to Bitmap (import as resource like #resource "\\Images\\jblanked.bmp"
          const int x1,              // X Position
@@ -152,13 +156,16 @@ class CPanelDraw : public CAppDialog
          const int y2 = 5           // Y-2 Position  
     );
     
-    CEdit CreateInputObject(
+    void CreateInput(
+         CEdit & inputObject,       // CEdit object to inherit properties
          const string inputName,    // Name of Input/Textbox
          const int x1,              // X Position
          const int y1,              // Y Position
          const int x2 = 5,          // X-2 Position
-         const int y2 = 5           // Y-2 Position 
+         const int y2 = 5           // Y-2 Position  
     );
+    
+    
     
     
           // constructor
@@ -268,6 +275,29 @@ void CPanelDraw::CreateLabel(
 }
 
 void CPanelDraw::CreateLabel(
+         CLabel & labelObject,
+         const string labelName, 
+         const string labelText, 
+         const color labelColor, 
+         const int labelFontSize,
+         const int x1,
+         const int y1,
+         const int x2 = 5,
+         const int y2 = 5 
+    ){
+    
+    createLabels = new CLabel();
+
+    createLabels.Create(NULL, labelName, 0, x1, y1, x2, y2);
+    
+    createLabels.Text(labelText);
+    createLabels.Color(labelColor);
+    createLabels.FontSize(labelFontSize); 
+    this.Add(createLabels); 
+    labelObject = createLabels;  
+}
+
+void CPanelDraw::CreateLabel(
          const string labelName, 
          const string labelText, 
          const color labelColor, 
@@ -289,6 +319,32 @@ void CPanelDraw::CreateLabel(
     createLabels.FontSize(labelFontSize); 
     this.Add(createLabels); 
 }
+
+void CPanelDraw::CreateLabel(
+         CLabel & labelObject,
+         const string labelName, 
+         const string labelText, 
+         const color labelColor, 
+         const color labelBackgroundColor,
+         const int labelFontSize,
+         const int x1,
+         const int y1,
+         const int x2 = 5,
+         const int y2 = 5 
+    ){
+    
+    createLabels = new CLabel();
+    
+    createLabels.Create(NULL, labelName, 0, x1, y1, x2, y2);
+
+    createLabels.Text(labelText);
+    createLabels.Color(labelColor);
+    createLabels.ColorBackground(labelBackgroundColor);
+    createLabels.FontSize(labelFontSize); 
+    this.Add(createLabels); 
+    labelObject = createLabels;
+}
+
 
 void CPanelDraw::CreateButton(
          const string buttonName, 
@@ -314,6 +370,33 @@ void CPanelDraw::CreateButton(
     this.Add(createButtons); 
 }
 
+void CPanelDraw::CreateButton(
+         CButton & buttonObject,
+         const string buttonName, 
+         const string buttonText, 
+         const color buttonColor, 
+         const color buttonBackgroundColor, 
+         const int buttonFontSize,
+         const int x1,
+         const int y1,
+         const int x2 = 5,
+         const int y2 = 5 
+    ){
+    
+    createButtons = new CButton();
+
+    createButtons.Create(NULL, buttonName, 0, x1, y1, x2, y2);
+    
+    
+    createButtons.Text(buttonText); 
+    createButtons.Color(buttonColor); 
+    createButtons.ColorBackground(buttonBackgroundColor); 
+    createButtons.FontSize(buttonFontSize); 
+    this.Add(createButtons); 
+    
+    buttonObject = createButtons;
+}
+
 void CPanelDraw::CreateBitmap(
          const string bitmapName, 
          const string bitmapPath, 
@@ -331,6 +414,27 @@ void CPanelDraw::CreateBitmap(
     this.Add(createBitmaps); 
 }
 
+void CPanelDraw::CreateBitmap(
+         CBmpButton & bitmapObject,
+         const string bitmapName, 
+         const string bitmapPath, 
+         const int x1,
+         const int y1,
+         const int x2 = 5,
+         const int y2 = 5 
+    ){
+    
+    createBitmaps = new CBmpButton();
+
+    createBitmaps.Create(NULL, bitmapName, 0, x1, y1, x2, y2);
+    
+    createBitmaps.BmpNames(bitmapPath,bitmapPath);
+    
+    this.Add(createBitmaps); 
+    
+    bitmapObject = createBitmaps;
+}
+
 void CPanelDraw::CreateInput(
          const string inputName, 
          const int x1,
@@ -346,3 +450,24 @@ void CPanelDraw::CreateInput(
     createInputs.ReadOnly(false);
     this.Add(createInputs); 
 }
+
+void CPanelDraw::CreateInput(
+         CEdit &inputObject,
+         const string inputName, 
+         const int x1,
+         const int y1,
+         const int x2 = 5,
+         const int y2 = 5 
+    ){
+    
+    createInputs = new CEdit();
+
+    createInputs.Create(NULL, inputName, 0, x1, y1, x2, y2);
+    
+    createInputs.ReadOnly(false); 
+   
+    this.Add(createInputs);  
+    
+    inputObject = createInputs;   
+}
+
