@@ -18,6 +18,10 @@ This repository contains a collection of popular MQL libraries that enhance the 
 
 7. **jason_with_search.mqh**: Includes the `CJAVal` class, enhancing JSON functionality in MQL with additional capabilities to perform search operations within JSON files, improving data accessibility and manipulation.
 
+8. **Panel-Draw.mqh**: Houses the `CPanelraw` class, which enables developers to draw various objects in a panel on the chart. This is useful for visually representing data or indicators directly on trading charts.
+
+9. **JB-Requests.mqh**: Contains the `CRequests` class, which simplifies the HTTP requests in MQL.
+
 ## Usage
 
 Each library is designed to be included in your MQL scripts to extend the capabilities of your trading bots or custom indicators. They can be used individually or in combination to build more sophisticated and interactive trading solutions on the MetaTrader platform.
