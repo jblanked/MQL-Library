@@ -29,6 +29,8 @@
       draw.PanelChartEvent(id,lparam,dparam,sparam);
 
    5. In OnDeInit
+   
+      draw.Destroy(reason);
 
       delete draw;
 */
@@ -171,7 +173,7 @@ public:
 
       if(height == NULL)
         {
-         this.chart_height = (int)ChartGetInteger(0,CHART_HEIGHT_IN_PIXELS);
+         this.chart_height = (int)ChartGetInteger(0,CHART_HEIGHT_IN_PIXELS) - 10;
         }
       else
         {
