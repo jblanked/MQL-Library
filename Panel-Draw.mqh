@@ -209,10 +209,6 @@ public:
    // set panel
    bool              CreatePanel();
 
-
-   void              ChartRedraw() {ChartRedraw(0);};
-
-
 private:
 
    // private variables
@@ -250,9 +246,8 @@ bool CPanelDraw::CreatePanel()
       Print("Failed to run panel");
       return false;
      }
-
-// refresh chart
-   this.ChartRedraw();
+    
+    ChartRedraw();
 
    this.Maximize();
 
