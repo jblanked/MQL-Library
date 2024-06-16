@@ -9,7 +9,7 @@
 
 /* TO-DO
 
-- add in getElementByClass, and getElementsByClass
+- fix bug: if there is the same tag within a tag, it will use the closing of the inner tag instead of outer tag
 
 - create a function that will read the HTML and set it line-by-line in an array/structure
    - string title; holds the <title></title>
@@ -281,7 +281,7 @@ public:
       // Find start and end position for element
       if(this.midTag == "")
         {
-         this.s = StringFind(HTML, this.startTag, this.idPosition) + StringLen(this.startTag);
+         this.s += StringLen(this.startTag);
          this.e = StringFind(HTML, this.endTag, this.s);
 
          // Return element content
@@ -295,7 +295,7 @@ public:
         {
          // Handles tags with a mid tag like <a href="url">content</a>
          // where <a is the start tag, > is the mid tag, and </a> is the end tag
-         this.s = StringFind(HTML, this.startTag, this.idPosition) + StringLen(this.startTag);
+         this.s += StringLen(this.startTag);
          this.m = StringFind(HTML, this.midTag, this.s) + StringLen(this.midTag);
          this.e = StringFind(HTML, this.endTag, this.m);
 
@@ -310,68 +310,177 @@ public:
 
       return false;
      }
-   
+
    // Sets the values stored in the elements with that ID in the provided HTML to the strArray
-bool getElementsByID(const string HTML, string &strArray[], const string id)
-{
-    // Initialize variables
-     loops = 0;
-    startPos = 0;
-    string idTag = "id=\"" + id + "\"";
+   bool              getElementsByID(const string HTML, string &strArray[], const string id)
+     {
+      // Initialize variables
+      this.loops = 0;
+      this.startPos = 0;
+      this.htmltag = "id=\"" + id + "\"";
 
-    // Resize array to a reasonable initial size
-    ArrayResize(strArray, 1000);
+      // Resize array to a reasonable initial size
+      ArrayResize(strArray, 1000);
 
-    while ((idPosition = StringFind(HTML, idTag, startPos)) != -1)
-    {
-        // Find the tag that contains the ID
-        ENUM_HTML_TAGS tag = findTag(HTML, idPosition);
-
-        setTags(tag);
-
-        // Find start and end position for element
-        if (midTag == "")
+      while((this.idPosition = StringFind(HTML, this.htmltag, this.startPos)) != -1)
         {
-            s = StringFind(HTML, startTag, idPosition) + StringLen(startTag);
-            e = StringFind(HTML, endTag, s);
-        }
-        else
-        {
+         // Find the tag that contains the ID
+         this.setTags(findTag(HTML, this.idPosition));
+
+         // Find start and end position for element
+         if(this.midTag == "")
+           {
+            this.s += StringLen(this.startTag);
+            this.e = StringFind(HTML, this.endTag, this.s);
+           }
+         else
+           {
             // Handles tags with a mid tag like <a href="url">content</a>
             // where <a is the start tag, > is the mid tag, and </a> is the end tag
-            s = StringFind(HTML, startTag, idPosition) + StringLen(startTag);
-            m = StringFind(HTML, midTag, s) + StringLen(midTag);
-            e = StringFind(HTML, endTag, m);
-        }
+            this.s += StringLen(this.startTag);
+            this.m = StringFind(HTML, this.midTag, this.s) + StringLen(this.midTag);
+            this.e = StringFind(HTML, this.endTag, this.m);
+           }
 
-        if (e == -1)
-        {
+         if(this.e == -1)
+           {
             break; // No matching end tag found, exit loop
+           }
+
+         // Extract the content between start and end tag
+         if(this.midTag == "")
+           {
+            this.htmlcontent = StringSubstr(HTML, this.s, this.e - this.s);
+           }
+         else
+           {
+            this.htmlcontent = StringSubstr(HTML, this.m, this.e - this.m);
+           }
+
+         // Save content to array
+         strArray[this.loops] = this.htmlcontent;
+         this.loops++;
+
+         // Move startPos past the current end tag
+         this.startPos = this.e + StringLen(this.endTag);
         }
 
-        // Extract the content between start and end tag
-        if (midTag == "")
+      // Resize array to actual number of found elements
+      ArrayResize(strArray, this.loops);
+
+      return this.loops != 0;
+     }
+
+   bool              getElementByClass(const string HTML, string &strVariable, const string className)
+     {
+      strVariable = NULL;
+
+      // Find start position of the class
+      this.idPosition = StringFind(HTML, "class=\"" + className + "\"");
+
+      if(this.idPosition == -1)
         {
-            htmlcontent = StringSubstr(HTML, s, e - s);
+         return false;
         }
-        else
+
+      // sets this.s to where the most recent < is
+      this.setTags(findTag(HTML, this.idPosition));
+      
+
+      // Find start and end position for element
+      if(this.midTag == "")
         {
-            htmlcontent = StringSubstr(HTML, m, e - m);
+         this.s += StringLen(this.startTag);
+         this.e = StringFind(HTML, this.endTag, this.s);
+
+         // Return element content
+         if(this.e != -1)
+           {
+            strVariable = StringSubstr(HTML, this.s, this.e - this.s);
+            return true;
+           }
+        }
+      else
+        {
+         // Handles tags with a mid tag like <a href="url">content</a>
+         // where <a is the start tag, > is the mid tag, and </a> is the end tag
+         
+         this.s += StringLen(this.startTag);
+         this.m = StringFind(HTML, this.midTag, this.s) + StringLen(this.midTag);
+         this.e = StringFind(HTML, this.endTag, this.m);
+
+         // Return element content
+         if(this.e != -1)
+           {
+            // Return the content between the mid and end tags
+            strVariable = StringSubstr(HTML, this.m, this.e - this.m);
+            return true;
+           }
         }
 
-        // Save content to array
-        strArray[loops] = htmlcontent;
-        loops++;
+      return false;
+     }
 
-        // Move startPos past the current end tag
-        startPos = e + StringLen(endTag);
-    }
+   // Sets the values stored in the elements with that class in the provided HTML to the strArray
+   bool              getElementsByClass(const string HTML, string &strArray[], const string className)
+     {
+      // Initialize variables
+      this.loops = 0;
+      this.startPos = 0;
 
-    // Resize array to actual number of found elements
-    ArrayResize(strArray, loops);
+      // Resize array to a reasonable initial size
+      ArrayResize(strArray, 1000);
 
-    return loops != 0;
-}
+      while((this.startPos = StringFind(HTML, "class=\"" + className + "\"", this.startPos)) != -1)
+        {
+         // Find the tag that contains the class
+         // sets this.s to where the most recent < is
+         setTags(findTag(HTML, this.startPos));
+
+         // Find start and end position for element
+         if(this.midTag == "")
+           {
+            this.s += StringLen(this.startTag);
+            this.e = StringFind(HTML, this.endTag, this.s);
+           }
+         else
+           {
+            // Handles tags with a mid tag like <a href="url">content</a>
+            // where <a is the start tag, > is the mid tag, and </a> is the end tag
+            this.s += StringLen(this.startTag);
+            this.m = StringFind(HTML, this.midTag, this.s) + StringLen(this.midTag);
+            this.e = StringFind(HTML, this.endTag, this.m);
+           }
+
+         if(this.e == -1)
+           {
+            break; // No matching end tag found, exit loop
+           }
+
+         // Extract the content between start and end tag
+         if(this.midTag == "")
+           {
+            this.htmlcontent = StringSubstr(HTML, this.s, this.e - this.s);
+           }
+         else
+           {
+            this.htmlcontent = StringSubstr(HTML, this.m, this.e - this.m);
+           }
+
+         // Save content to array
+         strArray[this.loops] = this.htmlcontent;
+         this.loops++;
+
+         // Move startPos past the current end tag
+         this.startPos = this.e + StringLen(this.endTag);
+        }
+
+      // Resize array to actual number of found elements
+      ArrayResize(strArray, this.loops);
+
+      return this.loops != 0;
+     }
+
 
 
 
