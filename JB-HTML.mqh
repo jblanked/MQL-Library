@@ -9,7 +9,8 @@
 
 /* TO-DO
 
-- fix bug: if there is the same tag within a tag, it will use the closing of the inner tag instead of outer tag
+- fix bug: 
+   - if there is the same tag within the element of a tag, it will use the closing of the inner tag instead of the outer tag
 
 - create a function that will read the HTML and set it line-by-line in an array/structure
    - string title; holds the <title></title>
@@ -149,7 +150,7 @@ public:
      }
 
 
-   // uses a GET requests to get the HTML from the url
+   // uses a GET request to get the HTML from the url
    string            getHTMLFromURL(const string url)
      {
       this.jb = new CRequests();
@@ -160,7 +161,7 @@ public:
       return this.data;
      }
 
-   // Sets the value stored in the first element with that tag in the provided HTML to the strVariable
+   // sets the value stored in the first element with that tag in the provided HTML to the strVariable
    bool              getElementByTag(const string HTML, string &strVariable, const ENUM_HTML_TAGS htmlTag = p_)
      {
       strVariable = NULL;
