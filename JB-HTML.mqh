@@ -9,9 +9,6 @@
 
 /* TO-DO
 
-- fix bug: 
-   - if there is the same tag within the element of a tag, it will use the closing of the inner tag instead of the outer tag
-
 - create a function that will read the HTML and set it line-by-line in an array/structure
    - string title; holds the <title></title>
    - string body[]; holds all the tags in the body tag-by-tag
@@ -175,6 +172,14 @@ public:
         {
          this.s = StringFind(HTML, this.startTag) + StringLen(this.startTag);
          this.e = StringFind(HTML, this.endTag, this.s);
+         
+         // Loop until there are no more inner tags
+            int j = this.s;
+            while(this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j) != -1 && j < this.e)
+              {
+               this.e = this.findOuterTag(HTML, tagToEnumWithoutBrackets(this.htmltag), this.e);
+               j = this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j);
+              }
 
          // Return element content
          if(this.e != -1)
@@ -191,6 +196,14 @@ public:
          this.s = StringFind(HTML, this.startTag) + StringLen(this.startTag);
          this.m = StringFind(HTML, this.midTag, this.s) + StringLen(this.midTag);
          this.e = StringFind(HTML, this.endTag, this.m);
+         
+         int j = this.s;
+         
+         while(this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j) != -1 && j < this.e)
+           {
+            this.e = this.findOuterTag(HTML, tagToEnumWithoutBrackets(this.htmltag), this.e);
+            j = this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j);
+           }
 
          // Return element content
          if(this.e != -1)
@@ -225,6 +238,14 @@ public:
            {
             this.s = this.startPos + StringLen(this.startTag);
             this.e = StringFind(HTML, this.endTag, this.s);
+            
+            // Loop until there are no more inner tags
+            int j = this.s;
+            while(this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j) != -1 && j < this.e)
+              {
+               this.e = this.findOuterTag(HTML, tagToEnumWithoutBrackets(this.htmltag), this.e);
+               j = this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j);
+              }
            }
          else
            {
@@ -233,6 +254,15 @@ public:
             this.s = this.startPos + StringLen(this.startTag);
             this.m = StringFind(HTML, this.midTag, this.s) + StringLen(this.midTag);
             this.e = StringFind(HTML, this.endTag, this.m);
+            
+            // Loop until there are no more inner tags
+         int j = this.s;
+
+         while(this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j) != -1 && j < this.e)
+           {
+            this.e = this.findOuterTag(HTML, tagToEnumWithoutBrackets(this.htmltag), this.e);
+            j = this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j);
+           }
            }
 
          if(this.e == -1)
@@ -284,6 +314,14 @@ public:
         {
          this.s += StringLen(this.startTag);
          this.e = StringFind(HTML, this.endTag, this.s);
+         
+         // Loop until there are no more inner tags
+            int j = this.s;
+            while(this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j) != -1 && j < this.e)
+              {
+               this.e = this.findOuterTag(HTML, tagToEnumWithoutBrackets(this.htmltag), this.e);
+               j = this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j);
+              }
 
          // Return element content
          if(this.e != -1)
@@ -299,6 +337,15 @@ public:
          this.s += StringLen(this.startTag);
          this.m = StringFind(HTML, this.midTag, this.s) + StringLen(this.midTag);
          this.e = StringFind(HTML, this.endTag, this.m);
+         
+         // Loop until there are no more inner tags
+         int j = this.s;
+
+         while(this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j) != -1 && j < this.e)
+           {
+            this.e = this.findOuterTag(HTML, tagToEnumWithoutBrackets(this.htmltag), this.e);
+            j = this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j);
+           }
 
          // Return element content
          if(this.e != -1)
@@ -333,6 +380,14 @@ public:
            {
             this.s += StringLen(this.startTag);
             this.e = StringFind(HTML, this.endTag, this.s);
+            
+            // Loop until there are no more inner tags
+            int j = this.s;
+            while(this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j) != -1 && j < this.e)
+              {
+               this.e = this.findOuterTag(HTML, tagToEnumWithoutBrackets(this.htmltag), this.e);
+               j = this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j);
+              }
            }
          else
            {
@@ -341,6 +396,15 @@ public:
             this.s += StringLen(this.startTag);
             this.m = StringFind(HTML, this.midTag, this.s) + StringLen(this.midTag);
             this.e = StringFind(HTML, this.endTag, this.m);
+            
+            // Loop until there are no more inner tags
+         int j = this.s;
+
+         while(this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j) != -1 && j < this.e)
+           {
+            this.e = this.findOuterTag(HTML, tagToEnumWithoutBrackets(this.htmltag), this.e);
+            j = this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j);
+           }
            }
 
          if(this.e == -1)
@@ -386,13 +450,22 @@ public:
 
       // sets this.s to where the most recent < is
       this.setTags(findTag(HTML, this.idPosition));
-      
+
 
       // Find start and end position for element
       if(this.midTag == "")
         {
          this.s += StringLen(this.startTag);
-         this.e = StringFind(HTML, this.endTag, this.s);
+         this.e = StringFind(HTML, this.endTag,this.s);
+
+         // Loop until there are no more inner tags
+         int j = this.s;
+
+         while(this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j) != -1 && j < this.e)
+           {
+            this.e = this.findOuterTag(HTML, tagToEnumWithoutBrackets(this.htmltag), this.e);
+            j = this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j);
+           }
 
          // Return element content
          if(this.e != -1)
@@ -405,10 +478,20 @@ public:
         {
          // Handles tags with a mid tag like <a href="url">content</a>
          // where <a is the start tag, > is the mid tag, and </a> is the end tag
-         
+
          this.s += StringLen(this.startTag);
          this.m = StringFind(HTML, this.midTag, this.s) + StringLen(this.midTag);
          this.e = StringFind(HTML, this.endTag, this.m);
+
+         // Loop until there are no more inner tags
+         int j = this.s;
+
+         while(this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j) != -1 && j < this.e)
+           {
+            
+            this.e = this.findOuterTag(HTML, tagToEnumWithoutBrackets(this.htmltag), this.e);
+            j = this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j);
+           }
 
          // Return element content
          if(this.e != -1)
@@ -443,6 +526,15 @@ public:
            {
             this.s += StringLen(this.startTag);
             this.e = StringFind(HTML, this.endTag, this.s);
+
+            // Loop until there are no more inner tags
+            int j = this.s;
+            
+            while(this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j) != -1 && j < this.e)
+              {
+               this.e = this.findOuterTag(HTML, tagToEnumWithoutBrackets(this.htmltag), this.e);
+               j = this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j);
+              }
            }
          else
            {
@@ -451,6 +543,15 @@ public:
             this.s += StringLen(this.startTag);
             this.m = StringFind(HTML, this.midTag, this.s) + StringLen(this.midTag);
             this.e = StringFind(HTML, this.endTag, this.m);
+
+            // Loop until there are no more inner tags
+            int j = this.s;
+
+            while(this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j) != -1 && j < this.e)
+              {
+               this.e = this.findOuterTag(HTML, tagToEnumWithoutBrackets(this.htmltag), this.e);
+               j = this.findInnerTag(HTML, tagToEnumWithoutBrackets(this.htmltag), j);
+              }
            }
 
          if(this.e == -1)
@@ -493,8 +594,10 @@ private:
    string            htmlcontent;
    int               loops, startPos;
 
+
    void              setTags(const ENUM_HTML_TAGS htmlTag)
      {
+
       this.htmltag = enumToTag(htmlTag);
 
       this.startTag = "<" + this.htmltag + ">";
@@ -525,6 +628,11 @@ private:
          case main_:
          case span_:
          case section_:
+         case ul_:
+         case ol_:
+         case button_:
+         case li_:
+         case header_:
             this.startTag = "<" + this.htmltag;
             this.midTag = ">";
             break;
@@ -537,6 +645,7 @@ private:
 
    string            enumToTag(const ENUM_HTML_TAGS htmlTag)
      {
+
       switch(htmlTag)
         {
          case a_:
@@ -758,9 +867,284 @@ private:
          case wbr_:
             return "wbr";
          default:
+            Print("Can't find a tag for " + EnumToString(htmlTag));
             return "p"; // Default case
         }
      }
+
+   string            enumToTagWithBrackets(const ENUM_HTML_TAGS htmlTag)
+     {
+      switch(htmlTag)
+        {
+         case a_:
+            return "<a ";
+         case abbr_:
+            return "<abbr>";
+         case address_:
+            return "<address>";
+         case area_:
+            return "<area>";
+         case article_:
+            return "<article>";
+         case aside_:
+            return "<aside>";
+         case audio_:
+            return "<audio>";
+         case b_:
+            return "<b>";
+         case base_:
+            return "<base>";
+         case bdi_:
+            return "<bdi>";
+         case bdo_:
+            return "<bdo>";
+         case blockquote_:
+            return "<blockquote>";
+         case body_:
+            return "<body>";
+         case br_:
+            return "<br>";
+         case button_:
+            return "<button ";
+         case canvas_:
+            return "<canvas>";
+         case caption_:
+            return "<caption>";
+         case cite_:
+            return "<cite>";
+         case code_:
+            return "<code>";
+         case col_:
+            return "<col>";
+         case colgroup_:
+            return "<colgroup>";
+         case data_:
+            return "<data>";
+         case datalist_:
+            return "<datalist>";
+         case dd_:
+            return "<dd>";
+         case del_:
+            return "<del>";
+         case details_:
+            return "<details>";
+         case dfn_:
+            return "<dfn>";
+         case dialog_:
+            return "<dialog>";
+         case div_:
+            return "<div";
+         case dl_:
+            return "<dl>";
+         case dt_:
+            return "<dt>";
+         case em_:
+            return "<em>";
+         case embed_:
+            return "<embed>";
+         case fieldset_:
+            return "<fieldset>";
+         case figcaption_:
+            return "<figcaption>";
+         case figure_:
+            return "<figure>";
+         case footer_:
+            return "<footer>";
+         case form_:
+            return "<form>";
+         case h1_:
+            return "<h1>";
+         case h2_:
+            return "<h2>";
+         case h3_:
+            return "<h3>";
+         case h4_:
+            return "<h4>";
+         case h5_:
+            return "<h5>";
+         case h6_:
+            return "<h6>";
+         case head_:
+            return "<head>";
+         case header_:
+            return "<header";
+         case hr_:
+            return "<hr>";
+         case html_:
+            return "<html>";
+         case i_:
+            return "<i>";
+         case iframe_:
+            return "<iframe>";
+         case img_:
+            return "<img ";
+         case input_:
+            return "<input ";
+         case ins_:
+            return "<ins>";
+         case kbd_:
+            return "<kbd>";
+         case label_:
+            return "<label>";
+         case legend_:
+            return "<legend>";
+         case li_:
+            return "<li";
+         case link_:
+            return "<link ";
+         case main_:
+            return "<main";
+         case map_:
+            return "<map>";
+         case mark_:
+            return "<mark>";
+         case meta_:
+            return "<meta ";
+         case meter_:
+            return "<meter>";
+         case nav_:
+            return "<nav ";
+         case noscript_:
+            return "<noscript>";
+         case object_:
+            return "<object>";
+         case ol_:
+            return "<ol>";
+         case optgroup_:
+            return "<optgroup>";
+         case option_:
+            return "<option>";
+         case output_:
+            return "<output>";
+         case p_:
+            return "<p";
+         case param_:
+            return "<param ";
+         case picture_:
+            return "<picture>";
+         case pre_:
+            return "<pre>";
+         case progress_:
+            return "<progress>";
+         case q_:
+            return "<q>";
+         case rp_:
+            return "<rp>";
+         case rt_:
+            return "<rt>";
+         case ruby_:
+            return "<ruby>";
+         case s_:
+            return "<s>";
+         case samp_:
+            return "<samp>";
+         case script_:
+            return "<script>";
+         case section_:
+            return "<section";
+         case select_:
+            return "<select>";
+         case small_:
+            return "<small>";
+         case source_:
+            return "<source ";
+         case span_:
+            return "<span ";
+         case strong_:
+            return "<strong>";
+         case style_:
+            return "<style>";
+         case sub_:
+            return "<sub>";
+         case summary_:
+            return "<summary>";
+         case sup_:
+            return "<sup>";
+         case table_:
+            return "<table>";
+         case tbody_:
+            return "<tbody>";
+         case td_:
+            return "<td>";
+         case template_:
+            return "<template>";
+         case textarea_:
+            return "<textarea>";
+         case tfoot_:
+            return "<tfoot>";
+         case th_:
+            return "<th>";
+         case thead_:
+            return "<thead>";
+         case time_:
+            return "<time>";
+         case title_:
+            return "<title>";
+         case tr_:
+            return "<tr>";
+         case track_:
+            return "<track";
+         case u_:
+            return "<u>";
+         case ul_:
+            return "<ul";
+         case var_:
+            return "<var>";
+         case video_:
+            return "<video>";
+         case wbr_:
+            return "<wbr>";
+         default:
+            Print("Can't find a tag for " + EnumToString(htmlTag));
+            return "<p"; // Default case
+        }
+     }
+
+
+   int               findInnerTag(const string HTML, ENUM_HTML_TAGS htmlTag, int startPosition)
+     {
+      string nhtmltag = enumToTagWithBrackets(htmlTag);
+
+      // search for the start of the tag
+      for(int i = startPosition + 1; i < StringLen(HTML); i++)
+        {
+         
+         // if the last StringLen(nhtmltag) characters are the start tag, then we have found the start of the tag
+         if(StringSubstr(HTML, i, StringLen(nhtmltag)) == nhtmltag)
+           {
+            return i;
+           }
+        }
+
+      return -1;
+     }
+
+   int               findOuterTag(const string HTML, ENUM_HTML_TAGS htmlTag, int endPosition)
+     {
+      string nhtmltag = enumToEndTag(htmlTag);
+
+      // search for the end of the tag
+      for(int i = endPosition + 1; i < StringLen(HTML); i++)
+        {
+         // if the first StringLen(this.endTag) characters are the end tag, then we have found the end of the tag
+         if(StringSubstr(HTML, i, StringLen(nhtmltag)) == nhtmltag)
+           {
+            return i;
+            break;
+           }
+        }
+
+      return -1;
+     }
+
+   bool              tagInsideTag(const string HTML, const ENUM_HTML_TAGS htmlTag, const int startPosition, const int endPosition)
+     {
+      int innerTagStart = findInnerTag(HTML, htmlTag, startPosition);
+      int outerTagEnd = findOuterTag(HTML, htmlTag, endPosition);
+
+      return innerTagStart != -1 && outerTagEnd != -1 && innerTagStart < outerTagEnd;
+     }
+
 
 
    ENUM_HTML_TAGS    tagToEnum(string htmlTag)
@@ -793,7 +1177,7 @@ private:
          return body_;
       if(htmlTag == "<br>")
          return br_;
-      if(htmlTag == "<button>")
+      if(StringFind(htmlTag, "<button ") == 0 || StringFind(htmlTag, "<button>") == 0)
          return button_;
       if(htmlTag == "<canvas>")
          return canvas_;
@@ -855,7 +1239,7 @@ private:
          return h6_;
       if(htmlTag == "<head>")
          return head_;
-      if(htmlTag == "<header>")
+      if(StringFind(htmlTag, "<header ") == 0 || StringFind(htmlTag, "<header>") == 0)
          return header_;
       if(htmlTag == "<hr>")
          return hr_;
@@ -877,7 +1261,7 @@ private:
          return label_;
       if(htmlTag == "<legend>")
          return legend_;
-      if(htmlTag == "<li>")
+      if(StringFind(htmlTag, "<li ") == 0 || StringFind(htmlTag, "<li>") == 0)
          return li_;
       if(StringFind(htmlTag, "<link ") == 0 || StringFind(htmlTag, "<link>") == 0)
          return link_;
@@ -891,13 +1275,13 @@ private:
          return meta_;
       if(htmlTag == "<meter>")
          return meter_;
-      if(htmlTag == "<nav>")
+      if(StringFind(htmlTag, "<nav ") == 0 || StringFind(htmlTag, "<nav>") == 0)
          return nav_;
       if(htmlTag == "<noscript>")
          return noscript_;
       if(htmlTag == "<object>")
          return object_;
-      if(htmlTag == "<ol>")
+      if(StringFind(htmlTag, "<ol ") == 0 || StringFind(htmlTag, "<ol>") == 0)
          return ol_;
       if(htmlTag == "<optgroup>")
          return optgroup_;
@@ -905,7 +1289,7 @@ private:
          return option_;
       if(htmlTag == "<output>")
          return output_;
-      if(htmlTag == "<p>")
+      if(StringFind(htmlTag, "<p ") == 0 || StringFind(htmlTag, "<p>") == 0)
          return p_;
       if(StringFind(htmlTag, "<param ") == 0 || StringFind(htmlTag, "<param>") == 0)
          return param_;
@@ -985,8 +1369,466 @@ private:
          return wbr_;
 
       // Default case
+      Print("Can't find an enumeration for " + htmlTag);
       return p_;
      }
+
+   ENUM_HTML_TAGS    tagToEnumWithoutBrackets(string htmlTag)
+     {
+      if(StringFind(htmlTag, "a ") == 0 || htmlTag == "a")
+         return a_;
+      if(htmlTag == "abbr")
+         return abbr_;
+      if(htmlTag == "address")
+         return address_;
+      if(htmlTag == "area")
+         return area_;
+      if(htmlTag == "article")
+         return article_;
+      if(htmlTag == "aside")
+         return aside_;
+      if(htmlTag == "audio")
+         return audio_;
+      if(htmlTag == "b")
+         return b_;
+      if(htmlTag == "base")
+         return base_;
+      if(htmlTag == "bdi")
+         return bdi_;
+      if(htmlTag == "bdo")
+         return bdo_;
+      if(htmlTag == "blockquote")
+         return blockquote_;
+      if(htmlTag == "body")
+         return body_;
+      if(htmlTag == "br")
+         return br_;
+      if(StringFind(htmlTag, "button ") == 0 || htmlTag == "button")
+         return button_;
+      if(htmlTag == "canvas")
+         return canvas_;
+      if(htmlTag == "caption")
+         return caption_;
+      if(htmlTag == "cite")
+         return cite_;
+      if(htmlTag == "code")
+         return code_;
+      if(htmlTag == "col")
+         return col_;
+      if(htmlTag == "colgroup")
+         return colgroup_;
+      if(htmlTag == "data")
+         return data_;
+      if(htmlTag == "datalist")
+         return datalist_;
+      if(htmlTag == "dd")
+         return dd_;
+      if(htmlTag == "del")
+         return del_;
+      if(htmlTag == "details")
+         return details_;
+      if(htmlTag == "dfn")
+         return dfn_;
+      if(htmlTag == "dialog")
+         return dialog_;
+      if(StringFind(htmlTag, "div ") == 0 || htmlTag == "div")
+         return div_;
+      if(htmlTag == "dl")
+         return dl_;
+      if(htmlTag == "dt")
+         return dt_;
+      if(htmlTag == "em")
+         return em_;
+      if(htmlTag == "embed")
+         return embed_;
+      if(htmlTag == "fieldset")
+         return fieldset_;
+      if(htmlTag == "figcaption")
+         return figcaption_;
+      if(htmlTag == "figure")
+         return figure_;
+      if(htmlTag == "footer")
+         return footer_;
+      if(htmlTag == "form")
+         return form_;
+      if(htmlTag == "h1")
+         return h1_;
+      if(htmlTag == "h2")
+         return h2_;
+      if(htmlTag == "h3")
+         return h3_;
+      if(htmlTag == "h4")
+         return h4_;
+      if(htmlTag == "h5")
+         return h5_;
+      if(htmlTag == "h6")
+         return h6_;
+      if(htmlTag == "head")
+         return head_;
+      if(StringFind(htmlTag, "header ") == 0 || htmlTag == "header")
+         return header_;
+      if(htmlTag == "hr")
+         return hr_;
+      if(htmlTag == "html")
+         return html_;
+      if(htmlTag == "i")
+         return i_;
+      if(htmlTag == "iframe")
+         return iframe_;
+      if(StringFind(htmlTag, "img ") == 0 || htmlTag == "img")
+         return img_;
+      if(StringFind(htmlTag, "input ") == 0 || htmlTag == "input")
+         return input_;
+      if(htmlTag == "ins")
+         return ins_;
+      if(htmlTag == "kbd")
+         return kbd_;
+      if(htmlTag == "label")
+         return label_;
+      if(htmlTag == "legend")
+         return legend_;
+      if(StringFind(htmlTag, "li ") == 0 || htmlTag == "li")
+         return li_;
+      if(StringFind(htmlTag, "link ") == 0 || htmlTag == "link")
+         return link_;
+      if(StringFind(htmlTag, "main ") == 0 || htmlTag == "main")
+         return main_;
+      if(htmlTag == "map")
+         return map_;
+      if(htmlTag == "mark")
+         return mark_;
+      if(StringFind(htmlTag, "meta ") == 0 || htmlTag == "meta")
+         return meta_;
+      if(htmlTag == "meter")
+         return meter_;
+      if(StringFind(htmlTag, "nav ") == 0 || htmlTag == "nav")
+         return nav_;
+      if(htmlTag == "noscript")
+         return noscript_;
+      if(htmlTag == "object")
+         return object_;
+      if(StringFind(htmlTag, "ol ") == 0 || htmlTag == "ol")
+         return ol_;
+      if(htmlTag == "optgroup")
+         return optgroup_;
+      if(htmlTag == "option")
+         return option_;
+      if(htmlTag == "output")
+         return output_;
+      if(StringFind(htmlTag, "p ") == 0 || htmlTag == "p")
+         return p_;
+      if(StringFind(htmlTag, "param ") == 0 || htmlTag == "param")
+         return param_;
+      if(htmlTag == "picture")
+         return picture_;
+      if(htmlTag == "pre")
+         return pre_;
+      if(htmlTag == "progress")
+         return progress_;
+      if(htmlTag == "q")
+         return q_;
+      if(htmlTag == "rp")
+         return rp_;
+      if(htmlTag == "rt")
+         return rt_;
+      if(htmlTag == "ruby")
+         return ruby_;
+      if(htmlTag == "s")
+         return s_;
+      if(htmlTag == "samp")
+         return samp_;
+      if(htmlTag == "script")
+         return script_;
+      if(StringFind(htmlTag, "section ") == 0 || htmlTag == "section")
+         return section_;
+      if(htmlTag == "select")
+         return select_;
+      if(htmlTag == "small")
+         return small_;
+      if(StringFind(htmlTag, "source ") == 0 || htmlTag == "source")
+         return source_;
+      if(StringFind(htmlTag, "span ") == 0 || htmlTag == "span")
+         return span_;
+      if(htmlTag == "strong")
+         return strong_;
+      if(htmlTag == "style")
+         return style_;
+      if(htmlTag == "sub")
+         return sub_;
+      if(htmlTag == "summary")
+         return summary_;
+      if(htmlTag == "sup")
+         return sup_;
+      if(htmlTag == "table")
+         return table_;
+      if(htmlTag == "tbody")
+         return tbody_;
+      if(htmlTag == "td")
+         return td_;
+      if(htmlTag == "template")
+         return template_;
+      if(htmlTag == "textarea")
+         return textarea_;
+      if(htmlTag == "tfoot")
+         return tfoot_;
+      if(htmlTag == "th")
+         return th_;
+      if(htmlTag == "thead")
+         return thead_;
+      if(htmlTag == "time")
+         return time_;
+      if(htmlTag == "title")
+         return title_;
+      if(htmlTag == "tr")
+         return tr_;
+      if(htmlTag == "track")
+         return track_;
+      if(htmlTag == "u")
+         return u_;
+      if(StringFind(htmlTag, "ul ") == 0 || htmlTag == "ul")
+         return ul_;
+      if(htmlTag == "var")
+         return var_;
+      if(htmlTag == "video")
+         return video_;
+      if(htmlTag == "wbr")
+         return wbr_;
+
+      // Default case
+      Print("Can't find an enumeration for " + htmlTag);
+      return p_;
+     }
+
+
+   string            enumToEndTag(ENUM_HTML_TAGS htmlTag)
+     {
+      switch(htmlTag)
+        {
+         case a_:
+            return "</a>";
+         case abbr_:
+            return "</abbr>";
+         case address_:
+            return "</address>";
+         case area_:
+            return "";
+         case article_:
+            return "</article>";
+         case aside_:
+            return "</aside>";
+         case audio_:
+            return "</audio>";
+         case b_:
+            return "</b>";
+         case base_:
+            return "";
+         case bdi_:
+            return "</bdi>";
+         case bdo_:
+            return "</bdo>";
+         case blockquote_:
+            return "</blockquote>";
+         case body_:
+            return "</body>";
+         case br_:
+            return "";
+         case button_:
+            return "</button>";
+         case canvas_:
+            return "</canvas>";
+         case caption_:
+            return "</caption>";
+         case cite_:
+            return "</cite>";
+         case code_:
+            return "</code>";
+         case col_:
+            return "";
+         case colgroup_:
+            return "</colgroup>";
+         case data_:
+            return "</data>";
+         case datalist_:
+            return "</datalist>";
+         case dd_:
+            return "</dd>";
+         case del_:
+            return "</del>";
+         case details_:
+            return "</details>";
+         case dfn_:
+            return "</dfn>";
+         case dialog_:
+            return "</dialog>";
+         case div_:
+            return "</div>";
+         case dl_:
+            return "</dl>";
+         case dt_:
+            return "</dt>";
+         case em_:
+            return "</em>";
+         case embed_:
+            return "";
+         case fieldset_:
+            return "</fieldset>";
+         case figcaption_:
+            return "</figcaption>";
+         case figure_:
+            return "</figure>";
+         case footer_:
+            return "</footer>";
+         case form_:
+            return "</form>";
+         case h1_:
+            return "</h1>";
+         case h2_:
+            return "</h2>";
+         case h3_:
+            return "</h3>";
+         case h4_:
+            return "</h4>";
+         case h5_:
+            return "</h5>";
+         case h6_:
+            return "</h6>";
+         case head_:
+            return "</head>";
+         case header_:
+            return "</header>";
+         case hr_:
+            return "";
+         case html_:
+            return "</html>";
+         case i_:
+            return "</i>";
+         case iframe_:
+            return "</iframe>";
+         case img_:
+            return "";
+         case input_:
+            return "";
+         case ins_:
+            return "</ins>";
+         case kbd_:
+            return "</kbd>";
+         case label_:
+            return "</label>";
+         case legend_:
+            return "</legend>";
+         case li_:
+            return "</li>";
+         case link_:
+            return "";
+         case main_:
+            return "</main>";
+         case map_:
+            return "</map>";
+         case mark_:
+            return "</mark>";
+         case meta_:
+            return "";
+         case meter_:
+            return "</meter>";
+         case nav_:
+            return "</nav>";
+         case noscript_:
+            return "</noscript>";
+         case object_:
+            return "</object>";
+         case ol_:
+            return "</ol>";
+         case optgroup_:
+            return "</optgroup>";
+         case option_:
+            return "</option>";
+         case output_:
+            return "</output>";
+         case p_:
+            return "</p>";
+         case param_:
+            return "";
+         case picture_:
+            return "</picture>";
+         case pre_:
+            return "</pre>";
+         case progress_:
+            return "</progress>";
+         case q_:
+            return "</q>";
+         case rp_:
+            return "</rp>";
+         case rt_:
+            return "</rt>";
+         case ruby_:
+            return "</ruby>";
+         case s_:
+            return "</s>";
+         case samp_:
+            return "</samp>";
+         case script_:
+            return "</script>";
+         case section_:
+            return "</section>";
+         case select_:
+            return "</select>";
+         case small_:
+            return "</small>";
+         case source_:
+            return "";
+         case span_:
+            return "</span>";
+         case strong_:
+            return "</strong>";
+         case style_:
+            return "</style>";
+         case sub_:
+            return "</sub>";
+         case summary_:
+            return "</summary>";
+         case sup_:
+            return "</sup>";
+         case table_:
+            return "</table>";
+         case tbody_:
+            return "</tbody>";
+         case td_:
+            return "</td>";
+         case template_:
+            return "</template>";
+         case textarea_:
+            return "</textarea>";
+         case tfoot_:
+            return "</tfoot>";
+         case th_:
+            return "</th>";
+         case thead_:
+            return "</thead>";
+         case time_:
+            return "</time>";
+         case title_:
+            return "</title>";
+         case tr_:
+            return "</tr>";
+         case track_:
+            return "";
+         case u_:
+            return "</u>";
+         case ul_:
+            return "</ul>";
+         case var_:
+            return "</var>";
+         case video_:
+            return "</video>";
+         case wbr_:
+            return "";
+
+         // Default case
+         default:
+            return "";
+        }
+     }
+
 
 
    // Helper function to find the tag starting at a given position
@@ -1007,7 +1849,11 @@ private:
 
 
       if(this.s == -1)
-         return p_;
+      {
+      Print("Can't find a tag.");
+      return p_;
+      }
+         
 
       // Get up to 10 characters including the < (example <a href="url">)
       string tag = StringSubstr(HTML, this.s, 10);
@@ -1040,7 +1886,7 @@ private:
          return body_;
       if(StringFind(tag, "<br>") == 0)
          return br_;
-      if(StringFind(tag, "<button>") == 0)
+      if(StringFind(tag, "<button ") == 0 || StringFind(tag, "<button>") == 0)
          return button_;
       if(StringFind(tag, "<canvas>") == 0)
          return canvas_;
@@ -1102,7 +1948,7 @@ private:
          return h6_;
       if(StringFind(tag, "<head>") == 0)
          return head_;
-      if(StringFind(tag, "<header>") == 0)
+      if(StringFind(tag, "<header ") == 0 || StringFind(tag, "<header>") == 0)
          return header_;
       if(StringFind(tag, "<hr>") == 0)
          return hr_;
@@ -1124,7 +1970,7 @@ private:
          return label_;
       if(StringFind(tag, "<legend>") == 0)
          return legend_;
-      if(StringFind(tag, "<li>") == 0)
+      if(StringFind(tag, "<li ") == 0 || StringFind(tag, "<li>") == 0)
          return li_;
       if(StringFind(tag, "<link ") == 0 || StringFind(tag, "<link>") == 0)
          return link_;
@@ -1138,13 +1984,13 @@ private:
          return meta_;
       if(StringFind(tag, "<meter>") == 0)
          return meter_;
-      if(StringFind(tag, "<nav>") == 0)
+      if(StringFind(tag, "<nav ") == 0 || StringFind(tag, "<nav>") == 0)
          return nav_;
       if(StringFind(tag, "<noscript>") == 0)
          return noscript_;
       if(StringFind(tag, "<object>") == 0)
          return object_;
-      if(StringFind(tag, "<ol>") == 0)
+      if(StringFind(tag, "<ol ") == 0 || StringFind(tag, "<ol>") == 0)
          return ol_;
       if(StringFind(tag, "<optgroup>") == 0)
          return optgroup_;
@@ -1152,7 +1998,7 @@ private:
          return option_;
       if(StringFind(tag, "<output>") == 0)
          return output_;
-      if(StringFind(tag, "<p>") == 0)
+      if(StringFind(tag, "<p ") == 0 || StringFind(tag, "<p>") == 0)
          return p_;
       if(StringFind(tag, "<param ") == 0 || StringFind(tag, "<param>") == 0)
          return param_;
@@ -1222,7 +2068,7 @@ private:
          return track_;
       if(StringFind(tag, "<u>") == 0)
          return u_;
-      if(StringFind(tag, "<ul>") == 0)
+      if(StringFind(tag, "<ul ") == 0 || StringFind(tag, "<ul>") == 0)
          return ul_;
       if(StringFind(tag, "<var>") == 0)
          return var_;
@@ -1232,6 +2078,7 @@ private:
          return wbr_;
 
       // Default case
+      Print("Can't find a tag");
       return p_;
      }
 
