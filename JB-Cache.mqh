@@ -7,531 +7,383 @@
 #property link      "https://www.jblanked.com/"
 #include <jb-json.mqh>
 #define None NULL
-enum ENUM_DATA_TYPE
-  {
-   INT, DOUBLE, LONG, ULONG, STRING, CJAVAL, DATETIME, COLOR, BOOL
-  };
+#define MACROS(A)
+MACROS(char)
+MACROS(short)
+MACROS(int)
+MACROS(long)
+MACROS(uchar)
+MACROS(ushort)
+MACROS(uint)
+MACROS(ulong)
+MACROS(bool)
+MACROS(string)
+MACROS(double)
+MACROS(float)
+MACROS(color)
+MACROS(datetime)
+#undef  MACROS
+
 //+------------------------------------------------------------------+
-class CCache
+//|                                                                  |
+//+------------------------------------------------------------------+
+class CCache : private JSON
   {
 public:
-
-   // constructor
-   CCache::          CCache(void)
+   // Constructor
+                     CCache(void)
      {
-      jaSon = new JSON();
-      string currentTime = TimeToString(TimeCurrent(),TIME_DATE|TIME_MINUTES|TIME_SECONDS);
-      StringReplace(currentTime,":","");
-      StringReplace(currentTime,".","");
-      StringReplace(currentTime," ","");
+      string currentTime = TimeToString(TimeCurrent(), TIME_DATE | TIME_MINUTES | TIME_SECONDS);
+      StringReplace(currentTime, ":", "");
+      StringReplace(currentTime, ".", "");
+      StringReplace(currentTime, " ", "");
       ogName = currentTime;
      }
-   
-   // constructor
-   CCache::          CCache(bool universalName)
+     
+                    CCache(const string universalName)
      {
-      jaSon = new JSON();
+      string currentTime = TimeToString(TimeCurrent(), TIME_DATE | TIME_MINUTES | TIME_SECONDS);
+      StringReplace(currentTime, ":", "");
+      StringReplace(currentTime, ".", "");
+      StringReplace(currentTime, " ", "");
+      ogName = universalName;
+     }
+
+   // Constructor with parameter
+                     CCache(const bool universalName)
+     {
       string currentTime;
-      if(!universalName) currentTime = TimeToString(TimeCurrent(),TIME_DATE|TIME_MINUTES|TIME_SECONDS);
-      else currentTime = TimeToString(iTime(_Symbol,PERIOD_MN1,0),TIME_DATE|TIME_MINUTES|TIME_SECONDS);
-      StringReplace(currentTime,":","");
-      StringReplace(currentTime,".","");
-      StringReplace(currentTime," ","");
-      StringReplace(currentTime,"-","");
+      if(!universalName)
+         currentTime = TimeToString(TimeCurrent(), TIME_DATE | TIME_MINUTES | TIME_SECONDS);
+      else
+         currentTime = TimeToString(iTime(_Symbol, PERIOD_MN1, 0), TIME_DATE | TIME_MINUTES | TIME_SECONDS);
+      StringReplace(currentTime, ":", "");
+      StringReplace(currentTime, ".", "");
+      StringReplace(currentTime, " ", "");
+      StringReplace(currentTime, "-", "");
       ogName = currentTime;
      }
 
-   // deconstructor
-   CCache::         ~CCache(void)
+   // Destructor
+                    ~CCache(void) {}
+
+   CJAVal            get_or_set_cj(const string key, CJAVal & value, const int timeoutInSeconds = 15)
      {
-      //jaSon.FileDelete();
-      delete jaSon;
-     }
-   
-   void set(const string key, const string value, const int timeoutInSeconds=15)
-   {
-      this.write(key,value,timeoutInSeconds);
-   }
 
-   string            get_or_set(const string key, const string value, const int timeoutInSeconds=15)
-     {
-      this.timeout(key);
-
-      tempValue = this.read_string(key);
-
-      if(tempValue != None && tempValue != " ")
-         return tempValue;
+      if(this.isExpired(key))
+        {
+         this.writeCJAVal(key, value, timeoutInSeconds);
+         return value;
+        }
+      this.tempKey = keyToInt(key);
+      if(this.readCJAVal(key)[this.tempKey]["timeout"].ToStr() != "")
+        {
+         return this.readCJAVal(key);
+        }
       else
         {
-         this.write(key,value,timeoutInSeconds);
+         this.writeCJAVal(key, value, timeoutInSeconds);
          return value;
         }
      }
 
-   string            get_string(const string key)
+   template<typename T>
+   T                 get_or_set(const string key, const T &value, const int timeoutInSeconds = 15)
      {
-      this.timeout(key);
-
-      tempValue = this.read_string(key);
-
-      if(tempValue != None && tempValue != " ")
-         return tempValue;
-      else
+      if(this.isExpired(key))
         {
-         return None;
-        }
-     }
-   
-   void set(const string key, const int value, const int timeoutInSeconds=15)
-   {
-      this.write(key,value,timeoutInSeconds);
-   }
-
-   int               get_or_set(const string key, const int value, const int timeoutInSeconds=15)
-     {
-      this.timeout(key);
-
-      tempValue = this.read_int(key) == 0 ? None : string(this.read_int(key));
-
-      if(tempValue != None && tempValue != " ")
-         return int(tempValue);
-      else
-        {
-         this.write(key,value,timeoutInSeconds);
-         return value;
-        }
-     }
-   
-   void set(const string key, const double value, const int timeoutInSeconds=15)
-   {
-      this.write(key,value,timeoutInSeconds);
-   }
-
-   double            get_or_set(const string key, const double value, const int timeoutInSeconds=15)
-     {
-      this.timeout(key);
-
-      tempValue = this.read_double(key) == 0.0 ? None : string(this.read_double(key));
-
-      if(tempValue != None && tempValue != " ")
-         return double(tempValue);
-      else
-        {
-         this.write(key,value,timeoutInSeconds);
-         return value;
-        }
-     }
-   
-   void set(const string key, const datetime value, const int timeoutInSeconds=15)
-   {
-      this.write(key,value,timeoutInSeconds);
-   }
-
-   datetime            get_or_set(const string key, const datetime value, const int timeoutInSeconds=15)
-     {
-      this.timeout(key);
-
-      tempValue = this.read_datetime(key) == None ? None : TimeToString(this.read_datetime(key),TIME_DATE|TIME_MINUTES|TIME_SECONDS);
-
-      if(tempValue != None && tempValue != " ")
-         return StringToTime(tempValue);
-      else
-        {
-         this.write(key,value,timeoutInSeconds);
-         return value;
-        }
-     }
-   
-   void set(const string key, const ulong value, const int timeoutInSeconds=15)
-   {
-      this.write(key,value,timeoutInSeconds);
-   }
-
-   ulong             get_or_set(const string key, const ulong value, const int timeoutInSeconds=15)
-     {
-      this.timeout(key);
-
-      tempValue = this.read_ulong(key) == None ? None : string(this.read_ulong(key));
-
-      if(tempValue != None && tempValue != " ")
-         return ulong(tempValue);
-      else
-        {
-         this.write(key,value,timeoutInSeconds);
-         return value;
-        }
-     }
-   
-   void set(const string key, const long value, const int timeoutInSeconds=15)
-   {
-      this.write(key,value,timeoutInSeconds);
-   }
-
-   long              get_or_set(const string key, const long value, const int timeoutInSeconds=15)
-     {
-      this.timeout(key);
-      tempValue = this.read_long(key) == None ? None : string(this.read_long(key));
-
-      if(tempValue != None && tempValue != " ")
-         return long(tempValue);
-      else
-        {
-         this.write(key,value,timeoutInSeconds);
-         return value;
-        }
-     }
-   
-   void set(const string key, const color value, const int timeoutInSeconds=15)
-   {
-      this.write(key,value,timeoutInSeconds);
-   }
-
-   color             get_or_set(const string key, const color value, const int timeoutInSeconds=15)
-     {
-      this.timeout(key);
-      tempValue = this.read_color(key) == None ? None : string(this.read_color(key));
-
-      if(tempValue != None && tempValue != " ")
-         return color(tempValue);
-      else
-        {
-         this.write(key,value,timeoutInSeconds);
-         return value;
-        }
-     }
-
-
-   CJAVal            get_or_set(const string key, CJAVal & value, const int timeoutInSeconds=15)
-     {
-
-      if(this.read_json(key)[key]["timeout"].ToStr() != "" && !this.timeout(key))
-
-         return this.read_json(key);
-
-      else
-        {
-         this.write(key,value,timeoutInSeconds);
+         this.write(key, value, timeoutInSeconds);
          return value;
         }
 
-     }
+      const string type = typename(value);
+      this.tempKey = keyToInt(key);
 
-   void              set(const string key, CJAVal & value, const int timeoutInSeconds=15)
-     {
-      this.write(key,value,timeoutInSeconds);
-     }
-
-
-   CJAVal            get(const string key)
-     {
-      return this.read_json(key);
-     }
-
-
-   bool              find(const string key, const ENUM_DATA_TYPE dataType = CJAVAL)
-     {
-
-      if(this.timeout(key)) return false;
-      
-      get_result = false;
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-
-      switch(dataType)
+      if(type == "CJAVal")
         {
-         case BOOL:
-            get_result = this.read_bool(key);
-            break;
-         case DATETIME:
-            get_result = this.read_datetime(key) != None;
-            break;
-         case COLOR:
-            get_result = this.read_color(key) != None;
-            break;
-         case DOUBLE:
-            get_result = this.read_double(key) != None;
-            break;
-         case INT:
-            get_result = this.read_int(key) != None;
-            break;
-         case ULONG:
-            get_result = this.read_ulong(key) != None;
-            break;
-         case STRING:
-            get_result = this.read_string(key) != None;
-            break;
-         case LONG:
-            get_result = this.read_long(key) != None;
-            break;
-         case CJAVAL:
-            get_result = this.read_json(key)[key]["timeout"].ToStr() != "";
-            break;
-         default:
-            get_result = false;
-            break;
+         if(this.readCJAVal(key)[this.tempKey]["timeout"].ToStr() != "")
+           {
+            return this.readCJAVal(key);
+           }
+         else
+           {
+            this.writeCJAVal(key, value, timeoutInSeconds);
+            return value;
+           }
         }
+      else
+         if(type == "string")
+           {
+            string tempValue = this.read<string>(key);
+            if(tempValue != None)
+               return (T)tempValue;
+            else
+              {
+               this.write(key, value, timeoutInSeconds);
+               return value;
+              }
+           }
+         else
+            if(type == "datetime")
+              {
+               string tempValue = this.read<string>(key);
+               if(tempValue != None)
+                  return (T)StringToTime(tempValue);
+               else
+                 {
+                  this.write(key, value, timeoutInSeconds);
+                  return value;
+                 }
+              }
+            else
+              {
+               string tempValue = this.read<string>(key);
+               if(tempValue != None)
+                  return (T)tempValue;
+               else
+                 {
+                  this.write(key, value, timeoutInSeconds);
+                  return value;
+                 }
+              }
+     }
+
+   template<typename T>
+   bool              find(const string key)
+     {
+      if(this.isExpired(key))
+         return false;
+
+      this.get_result = false;
+      this.tempKey = keyToInt(key);
+      this.filename = this.tempKey + ogName + ".json";
+
+      const string type = typename(T);
+
+      if(type == "bool")
+        {
+         get_result = this.readBool(key);
+        }
+      else
+         if(type == "CJAVal")
+           {
+            get_result = this.readCJAVal(key)[this.tempKey]["timeout"].ToStr() != "";
+           }
+         else
+           {
+            get_result = this.read<T>(key) != None;
+           }
 
       return get_result;
+     }
 
+   bool              findCJAVal(const string key)
+     {
+      if(this.isExpired(key))
+      {
+         return false;
+      }
+         
+
+      this.get_result = false;
+      this.tempKey = keyToInt(key); 
+      this.filename = this.tempKey + ogName + ".json";
+
+      get_result = this.readCJAVal(key)[this.tempKey]["timeout"].ToStr() != "";
+      return get_result;
+     }
+
+   template<typename T>
+   void              set(const string key, const T value, const int timeoutInSeconds = 15)
+     {
+      this.write(key, value, timeoutInSeconds);
+     }
+
+   void              setCJAVal(const string key, CJAVal & value, const int timeoutInSeconds = 15)
+     {
+      this.writeCJAVal(key, value, timeoutInSeconds);
+     }
+
+   template<typename T>
+   T                 get(const string key)
+     {
+      //     const string type = typename(T);
+      //
+      //      if(type == "bool")
+      //        {
+      //        return this.readBool(key);
+      //        }
+      //
+      //        else if(type == "CJAVal")
+      //        {
+      //         return this.readCJAVal(key);
+      //        }
+
+      return this.read<T>(key);
+     }
+
+   CJAVal            getCJAVal(const string key)
+     {
+      return this.readCJAVal(key);
      }
 
 private:
-
-   JSON              *jaSon;
-   string            timeout(int amountOfSeconds)
+   string            timeout(const int amountOfSeconds)
      {
-      //amountOfSeconds = amountOfSeconds > 1 ? amountOfSeconds - 1 : amountOfSeconds;
-      return TimeToString(TimeCurrent() + amountOfSeconds,TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+      return TimeToString(TimeCurrent() + amountOfSeconds, TIME_DATE | TIME_MINUTES | TIME_SECONDS);
      }
-   bool              timeout(const string key)
+
+   bool              isExpired(const string key)
      {
       this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileRead();
-      tempValue = jaSon.json[key]["timeout"].ToStr();
+      this.tempKey = keyToInt(key); 
+      this.filename = this.tempKey + ogName + ".json";
+      this.FileRead();
+      tempValue = this.json[this.tempKey]["timeout"].ToStr();
 
       if(StringToTime(tempValue) == 0 || TimeCurrent() >= StringToTime(tempValue))
         {
          this.erase(key);
-
          return true;
         }
 
       return false;
      }
-   void              clear(void) {jaSon.json.Clear();}
+
+   void              clear(void) { this.json.Clear(); }
    string            tempValue;
    string            ogName;
    bool              get_result;
+   string               tempKey;
 
-   void              write(const string key, const int value, const int timeoutInSeconds=15)
+   void              erase(const string key)
      {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileRead();
-      jaSon.json[key]["value"] = value;
-      jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
-      jaSon.FileWrite(true);
-     }
-   void              write(const string key, const double value, const int timeoutInSeconds=15)
-     {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileRead();
-      jaSon.json[key]["value"] = value;
-      jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
-      jaSon.FileWrite(true);
+      this.filename = keyToInt(key) + ogName + ".json";
+      this.FileDelete();
      }
 
-   void              write(const string key, const string value, const int timeoutInSeconds=15)
+   string            keyToInt(const string key)
      {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileRead();
-      jaSon.json[key]["value"] = value;
-      jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
-      jaSon.FileWrite(true);
-     }
-   void              write(const string key, const datetime value, const int timeoutInSeconds=15)
-     {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.json[key]["value"] = TimeToString(value,TIME_DATE|TIME_MINUTES|TIME_SECONDS);
-      jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
-      jaSon.FileWrite(true);
+      char goGet[];
+      string opentest;
+      StringToCharArray(key, goGet);
+
+      for(int i = 0; i < ArraySize(goGet); i++)
+        {
+         opentest += string(goGet[i]);
+        }
+
+      return opentest;
      }
 
-   void              write(const string key, const ulong value, const int timeoutInSeconds=15)
+   template<typename T>
+   void              write(const string key, const T &value, const int timeoutInSeconds = 15)
      {
-      this.timeout(key);
+      this.isExpired(key);
       this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
+      this.tempKey = keyToInt(key); 
+      this.filename = this.tempKey + ogName + ".json";
 
-      jaSon.json[key]["value"] = string(value);
-      jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
-      jaSon.FileWrite(true);
+      const string type = typename(value);
+
+      if(type == "string")
+        {
+         this.json[this.tempKey]["value"] = value;
+         this.json[this.tempKey]["timeout"] = this.timeout(timeoutInSeconds);
+        }
+      else
+         if(type == "datetime")
+           {
+            this.json[this.tempKey]["value"] = TimeToString((datetime)value, TIME_DATE | TIME_MINUTES | TIME_SECONDS);
+            this.json[this.tempKey]["timeout"] = this.timeout(timeoutInSeconds);
+           }
+         else
+            if(type == "CJAVal")
+              {
+               CJAVal temper;
+               temper[this.tempKey]["timeout"] = this.timeout(timeoutInSeconds);
+               this.json = temper;
+              }
+            else
+              {
+               this.json[this.tempKey]["value"] = string(value);
+               this.json[this.tempKey]["timeout"] = this.timeout(timeoutInSeconds);
+              }
+
+      this.FileWrite(true);
      }
 
-   void              write(const string key, const long value, const int timeoutInSeconds=15)
+   template<typename T>
+   T                 read(const string key)
      {
-      this.timeout(key);
+      this.isExpired(key);
       this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
+      this.tempKey = keyToInt(key); 
+      this.filename = this.tempKey + ogName + ".json";
+      this.FileRead();
+      tempValue = this.json[this.tempKey]["value"].ToStr();
 
-      jaSon.json[key]["value"] = value;
-      jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
-      jaSon.FileWrite(true);
-     }
-   void              write(const string key, const color value, const int timeoutInSeconds=15)
-     {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
+      const string type = typename(T);
 
-      jaSon.json[key]["value"] = string(value);
-      jaSon.json[key]["timeout"] = this.timeout(timeoutInSeconds);
-      jaSon.FileWrite(true);
-     }
-   void              write(const string key, const CJAVal & value, const int timeoutInSeconds=15)
-     {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
+      //if(type == "CJAVal")
+      //{
+      //   return this.json;
+      //}
 
-      CJAVal temper = value;
+      if(type == "datetime")
+        {
+         if(tempValue != "" && tempValue != " ")
+            return (T)StringToTime(tempValue);
+         else
+            return (T)None;
+        }
 
-      temper[key]["timeout"] = this.timeout(timeoutInSeconds);
-      jaSon.json = temper;
-      jaSon.FileWrite(true);
-     }
-
-   int               read_int(const string key)
-     {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileRead();
-      tempValue = jaSon.json[key]["value"].ToStr();
+      tempValue = this.json[this.tempKey]["value"].ToStr();
 
       if(tempValue != "" && tempValue != " " && tempValue != None)
-         return int(tempValue);
+         return (T)tempValue;
       else
-         return None;
+         return (T)None;
      }
 
-   double            read_double(const string key)
+   bool                 readBool(const string key)
      {
-      this.timeout(key);
+      this.isExpired(key);
       this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileRead();
-      tempValue = jaSon.json[key]["value"].ToStr();
+      this.tempKey = keyToInt(key); 
+      this.filename = this.tempKey + ogName + ".json";
+      this.FileRead();
+      tempValue = this.json[this.tempKey]["value"].ToStr();
 
-      if(tempValue != "" && tempValue != " ")
-         return double(tempValue);
-      else
-         return None;
-     }
-
-   string            read_string(const string key)
-     {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileRead();
-      tempValue = jaSon.json[key]["value"].ToStr();
-
-      if(tempValue != "" && tempValue != " ")
-         return tempValue;
-      else
-         return None;
-     }
-
-   datetime          read_datetime(const string key)
-     {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileRead();
-      tempValue = jaSon.json[key]["value"].ToStr();
-
-      if(tempValue != "" && tempValue != " ")
-         return StringToTime(tempValue);
-      else
-         return None;
-     }
-
-   ulong             read_ulong(const string key)
-     {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileRead();
-      tempValue = jaSon.json[key]["value"].ToStr();
-
-      if(tempValue != "" && tempValue != " ")
-         return ulong(tempValue);
-      else
-         return None;
-     }
-
-   long              read_long(const string key)
-     {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileRead();
-      tempValue = jaSon.json[key]["value"].ToStr();
-
-      if(tempValue != "" && tempValue != " ")
-         return long(tempValue);
-      else
-         return None;
-     }
-
-   color             read_color(const string key)
-     {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileRead();
-      tempValue = jaSon.json[key]["value"].ToStr();
-
-      if(tempValue != "" && tempValue != " ")
-         return color(tempValue);
-      else
-         return None;
-     }
-
-   bool              read_bool(const string key)
-     {
-      this.timeout(key);
-      this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileRead();
-      tempValue = jaSon.json[key]["value"].ToStr();
-      
       if(tempValue != "" && tempValue != " " && tempValue != None)
-         return tempValue == "true" ? true : false;
+         return (tempValue == "true");
       else
          return false;
      }
 
-   CJAVal            read_json(const string key)
+   CJAVal                 readCJAVal(const string key)
      {
-      this.timeout(key);
+      this.isExpired(key);
       this.clear();
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileRead();
-      return jaSon.json;
-
+      this.tempKey = keyToInt(key); 
+      this.filename = this.tempKey + ogName + ".json";
+      this.FileRead();
+      return this.json;
      }
 
 
-   void              erase(const string key)
+   void              writeCJAVal(const string key, CJAVal & value, const int timeoutInSeconds = 15)
      {
-      jaSon.filename = keyToInt(key) + ogName + "-cache.json";
-      jaSon.FileDelete();
+      this.isExpired(key);
+      this.clear();
+      this.tempKey = keyToInt(key); 
+      this.filename = this.tempKey + ogName + ".json";
+
+      this.json[this.tempKey]["value"] = value;
+      this.json[this.tempKey]["timeout"] = this.timeout(timeoutInSeconds);
+
+      this.FileWrite(true);
      }
-
-   string               keyToInt(const string key)
-     {
-      char goGet[];
-      string opentest;
-      StringToCharArray(key,goGet);
-
-      for(int i = 0; i < ArraySize(goGet); i++)
-        {
-         opentest+=string(goGet[i]);
-        }
-      
-      return opentest;
-     }
-
-
 
   };
 //+------------------------------------------------------------------+

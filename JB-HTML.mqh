@@ -148,11 +148,11 @@ public:
 
 
    // uses a GET request to get the HTML from the url
-   string            getHTMLFromURL(const string url)
+   string            getHTMLFromURL(const string url, const string headers = NULL)
      {
       this.jb = new CRequests();
       this.jb.url = url;
-      this.jb.GET(5000,NULL,url);
+      this.jb.GET(5000,headers,url);
       this.data = this.jb.result;
       delete this.jb;
       return this.data;
@@ -633,6 +633,7 @@ private:
          case button_:
          case li_:
          case header_:
+         case tr_:
             this.startTag = "<" + this.htmltag;
             this.midTag = ">";
             break;
@@ -1081,7 +1082,7 @@ private:
          case title_:
             return "<title>";
          case tr_:
-            return "<tr>";
+            return "<tr";
          case track_:
             return "<track";
          case u_:
@@ -1353,7 +1354,7 @@ private:
          return time_;
       if(htmlTag == "<title>")
          return title_;
-      if(htmlTag == "<tr>")
+      if(StringFind(htmlTag, "<tr ") == 0 || StringFind(htmlTag, "<tr>") == 0)
          return tr_;
       if(htmlTag == "<track>")
          return track_;
@@ -1579,7 +1580,7 @@ private:
          return time_;
       if(htmlTag == "title")
          return title_;
-      if(htmlTag == "tr")
+      if(StringFind(htmlTag, "tr ") == 0 || htmlTag == "tr")
          return tr_;
       if(htmlTag == "track")
          return track_;
@@ -2062,7 +2063,7 @@ private:
          return time_;
       if(StringFind(tag, "<title>") == 0)
          return title_;
-      if(StringFind(tag, "<tr>") == 0)
+      if(StringFind(tag, "<tr ") == 0 || StringFind(tag, "<tr>") == 0)
          return tr_;
       if(StringFind(tag, "<track>") == 0)
          return track_;
