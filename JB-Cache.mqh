@@ -156,7 +156,7 @@ public:
 
       this.get_result = false;
       this.tempKey = keyToInt(key);
-      this.filename = ogName + "\\" + this.tempKey + ".json";
+      this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
 
       const string type = typename(T);
 
@@ -187,7 +187,7 @@ public:
 
       this.get_result = false;
       this.tempKey = keyToInt(key);
-      this.filename = ogName + "\\" + this.tempKey + ".json";
+      this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
 
       get_result = this.readCJAVal(key)[this.tempKey]["timeout"].ToStr() != "";
       return get_result;
@@ -237,7 +237,7 @@ private:
      {
       this.clear();
       this.tempKey = keyToInt(key);
-      this.filename = ogName + "\\" + this.tempKey + ".json";
+      this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
       this.FileRead();
       tempValue = this.json[this.tempKey]["timeout"].ToStr();
 
@@ -258,7 +258,7 @@ private:
 
    void              erase(const string key)
      {
-      this.filename = ogName + "\\" + this.tempKey + ".json";
+      this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
       this.FileDelete();
      }
 
@@ -282,7 +282,7 @@ private:
       this.isExpired(key);
       this.clear();
       this.tempKey = keyToInt(key);
-      this.filename = ogName + "\\" + this.tempKey + ".json";
+      this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
 
       const string type = typename(value);
 
@@ -319,7 +319,7 @@ private:
       this.isExpired(key);
       this.clear();
       this.tempKey = keyToInt(key);
-      this.filename = ogName + "\\" + this.tempKey + ".json";
+      this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
       this.FileRead();
       tempValue = this.json[this.tempKey]["value"].ToStr();
 
@@ -351,7 +351,7 @@ private:
       this.isExpired(key);
       this.clear();
       this.tempKey = keyToInt(key);
-      this.filename = ogName + "\\" + this.tempKey + ".json";
+      this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
       this.FileRead();
       tempValue = this.json[this.tempKey]["value"].ToStr();
 
@@ -366,7 +366,7 @@ private:
       this.isExpired(key);
       this.clear();
       this.tempKey = keyToInt(key);
-      this.filename = ogName + "\\" + this.tempKey + ".json";
+      this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
       this.FileRead();
       return this.json;
      }
@@ -377,7 +377,7 @@ private:
       this.isExpired(key);
       this.clear();
       this.tempKey = keyToInt(key);
-      this.filename = ogName + "\\" + this.tempKey + ".json";
+      this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
 
       this.json[this.tempKey]["value"] = value;
       this.json[this.tempKey]["timeout"] = this.timeout(timeoutInSeconds);
