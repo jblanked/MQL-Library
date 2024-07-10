@@ -5,12 +5,6 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2024,JBlanked"
 #property link      "https://www.jblanked.com/"
-#import "shell32.dll"
-int ShellExecuteW(int hwnd, string lpOperation, string lpFile, string lpParameters, string lpDirectory, int nShowCmd);
-#import
-
-#define SW_HIDE 0
-
 enum ENUM_TIME_INCREMENT
   {
    ENUM_YEAR = 0, // Year
@@ -106,7 +100,6 @@ public:
      }
 
    datetime          stringToTime(const string time, const datetime timeCurrent = 0);
-   datetime          timeInternet(void);
   };
 
 //+------------------------------------------------------------------+
@@ -260,41 +253,5 @@ datetime CTime::GMT(const datetime servertime,const ushort winterOffset=4,const 
      {
       return servertime - winterOffset * 3600;
      }
-  }
-//+------------------------------------------------------------------+
-//|                                                                  |
-//+------------------------------------------------------------------+
-datetime CTime::timeInternet(void)
-  {
-   const string tempFile = TerminalInfoString(TERMINAL_COMMONDATA_PATH) + "\\Files\\internet_time.txt";
-
-// Execute the PowerShell command
-   int result = ShellExecuteW(
-                   0,
-                   "open",
-                   "cmd.exe",
-                   "/c " +  "powershell.exe -Command \"(Get-Date).ToString('yyyy.MM.dd HH:mm:ss') > " + tempFile + "\"",
-                   NULL,
-                   SW_HIDE
-                );
-
-   if(result <= 32)
-     {
-      return 0;
-     }
-
-   string internetTime;
-   int fileHandle = FileOpen("internet_time.txt", FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_TXT);
-   if(fileHandle != INVALID_HANDLE)
-     {
-      internetTime = FileReadString(fileHandle);
-      FileClose(fileHandle);
-     }
-   else
-     {
-      return 0;
-     }
-
-   return StringToTime(internetTime);
   }
 //+------------------------------------------------------------------+

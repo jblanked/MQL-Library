@@ -60,19 +60,7 @@ public:
    // Constructor
                      CCache(const string universalName)
      {
-      if(universalName != NULL)
-        {
-         string currentTime = TimeToString(TimeCurrent(), TIME_DATE | TIME_MINUTES | TIME_SECONDS);
-         StringReplace(currentTime, ":", "");
-         StringReplace(currentTime, ".", "");
-         StringReplace(currentTime, " ", "");
-         ogName = universalName;
-        }
-      else
-        {
-         ogName = "General";
-        }
-
+      ogName = universalName != NULL ? universalName : "General";
      }
 
 
@@ -229,15 +217,12 @@ public:
      }
 
 private:
+
    string            timeout(const int amountOfSeconds)
      {
-      return
-         tme.isMarketOpen()  && !tme.isTester()
-         ?
-         TimeToString(TimeCurrent() + amountOfSeconds, TIME_DATE | TIME_MINUTES | TIME_SECONDS)
-         :
-         TimeToString(tme.timeInternet() + amountOfSeconds, TIME_DATE | TIME_MINUTES | TIME_SECONDS);
+      return TimeToString(this.TimeCurrent() + amountOfSeconds, TIME_DATE | TIME_MINUTES | TIME_SECONDS);
      }
+
 
    bool              isExpired(const string key)
      {
@@ -246,9 +231,8 @@ private:
       this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
       this.FileRead();
       this.tempValue = this.json[this.tempKey]["timeout"].ToStr();
-      this.tempTime = tme.isMarketOpen()  && !tme.isTester() ? TimeCurrent() : tme.timeInternet();
 
-      if(StringToTime(tempValue) == 0 ||  this.tempTime >= StringToTime(tempValue))
+      if(StringToTime(tempValue) == 0 ||  this.TimeCurrent() >= StringToTime(tempValue))
         {
          this.erase(key);
          return true;
