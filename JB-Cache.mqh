@@ -6,6 +6,7 @@
 #property copyright "Copyright 2024,JBlanked"
 #property link      "https://www.jblanked.com/"
 #include <jb-json.mqh>
+#include <jb-time.mqh>
 #define None NULL
 
 /* ---- Examples
@@ -230,7 +231,12 @@ public:
 private:
    string            timeout(const int amountOfSeconds)
      {
-      return TimeToString(TimeCurrent() + amountOfSeconds, TIME_DATE | TIME_MINUTES | TIME_SECONDS);
+      return
+         tme.isMarketOpen()  && !tme.isTester()
+         ?
+         TimeToString(TimeCurrent() + amountOfSeconds, TIME_DATE | TIME_MINUTES | TIME_SECONDS)
+         :
+         TimeToString(tme.timeInternet() + amountOfSeconds, TIME_DATE | TIME_MINUTES | TIME_SECONDS);
      }
 
    bool              isExpired(const string key)
@@ -239,9 +245,10 @@ private:
       this.tempKey = keyToInt(key);
       this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
       this.FileRead();
-      tempValue = this.json[this.tempKey]["timeout"].ToStr();
+      this.tempValue = this.json[this.tempKey]["timeout"].ToStr();
+      this.tempTime = tme.isMarketOpen()  && !tme.isTester() ? TimeCurrent() : tme.timeInternet();
 
-      if(StringToTime(tempValue) == 0 || TimeCurrent() >= StringToTime(tempValue))
+      if(StringToTime(tempValue) == 0 ||  this.tempTime >= StringToTime(tempValue))
         {
          this.erase(key);
          return true;
@@ -255,7 +262,9 @@ private:
    string            tempTimeout;
    string            ogName;
    bool              get_result;
-   string               tempKey;
+   string            tempKey;
+   datetime          tempTime;
+   CTime             tme;
 
    void              erase(const string key)
      {
