@@ -78,32 +78,32 @@ public:
    // Destructor
                     ~CCache(void) {}
 
-   CJAVal            get_or_set_cj(const string key, CJAVal & value, const int timeoutInSeconds = 15)
+   CJAVal            get_or_set_cj(const string key, CJAVal & value, const int timeoutInSeconds = 15, const bool hashValue = false)
      {
 
       if(this.isExpired(key))
         {
-         this.writeCJAVal(key, value, timeoutInSeconds);
+         this.writeCJAVal(key, value, timeoutInSeconds, hashValue);
          return value;
         }
       this.tempKey = keyToInt(key);
-      if(this.readCJAVal(key)[this.tempKey]["timeout"].ToStr() != "")
+      if(this.readCJAVal(key, hashValue)[this.tempKey]["timeout"].ToStr() != "")
         {
-         return this.readCJAVal(key);
+         return this.readCJAVal(key, hashValue);
         }
       else
         {
-         this.writeCJAVal(key, value, timeoutInSeconds);
+         this.writeCJAVal(key, value, timeoutInSeconds, hashValue);
          return value;
         }
      }
 
    template<typename T>
-   T                 get_or_set(const string key, const T &value, const int timeoutInSeconds = 15)
+   T                 get_or_set(const string key, const T &value, const int timeoutInSeconds = 15, const bool hashValue = false)
      {
       if(this.isExpired(key))
         {
-         this.write(key, value, timeoutInSeconds);
+         this.write(key, value, timeoutInSeconds, hashValue);
          return value;
         }
 
@@ -114,42 +114,42 @@ public:
 
       if(type == "string")
         {
-         tempValue = this.read<string>(key);
+         tempValue = this.read<string>(key, hashValue);
          if(tempValue != None)
             return (T)tempValue;
          else
            {
-            this.write(key, value, timeoutInSeconds);
+            this.write(key, value, timeoutInSeconds, hashValue);
             return value;
            }
         }
       else
          if(type == "datetime")
            {
-            tempValue = this.read<string>(key);
+            tempValue = this.read<string>(key, hashValue);
             if(tempValue != None)
                return (T)StringToTime(tempValue);
             else
               {
-               this.write(key, value, timeoutInSeconds);
+               this.write(key, value, timeoutInSeconds, hashValue);
                return value;
               }
            }
          else
            {
-            tempValue = this.read<string>(key);
+            tempValue = this.read<string>(key, hashValue);
             if(tempValue != None)
                return (T)tempValue;
             else
               {
-               this.write(key, value, timeoutInSeconds);
+               this.write(key, value, timeoutInSeconds, hashValue);
                return value;
               }
            }
      }
 
    template<typename T>
-   bool              find(const string key)
+   bool              find(const string key, const bool unHashValue = false)
      {
       if(this.isExpired(key))
          return false;
@@ -162,22 +162,22 @@ public:
 
       if(type == "bool")
         {
-         get_result = this.readBool(key);
+         get_result = this.readBool(key,unHashValue);
         }
       else
          if(type == "CJAVal")
            {
-            get_result = this.readCJAVal(key)[this.tempKey]["timeout"].ToStr() != "";
+            get_result = this.readCJAVal(key,unHashValue, true)[this.tempKey]["timeout"].ToStr() != "";
            }
          else
            {
-            get_result = this.read<T>(key) != None;
+            get_result = this.read<T>(key,unHashValue) != None;
            }
 
       return get_result;
      }
 
-   bool              findCJAVal(const string key)
+   bool              findCJAVal(const string key, const bool unHashValue = false)
      {
       if(this.isExpired(key))
         {
@@ -189,23 +189,23 @@ public:
       this.tempKey = keyToInt(key);
       this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
 
-      get_result = this.readCJAVal(key)[this.tempKey]["timeout"].ToStr() != "";
+      get_result = this.readCJAVal(key,unHashValue, true)["timeout"].ToStr() != "";
       return get_result;
      }
 
    template<typename T>
-   void              set(const string key, const T value, const int timeoutInSeconds = 15)
+   void              set(const string key, const T value, const int timeoutInSeconds = 15, const bool hashValue = false)
      {
-      this.write(key, value, timeoutInSeconds);
+      this.write(key, value, timeoutInSeconds, hashValue);
      }
 
-   void              setCJAVal(const string key, CJAVal & value, const int timeoutInSeconds = 15)
+   void              setCJAVal(const string key, CJAVal & value, const int timeoutInSeconds = 15, const bool hashValue = false)
      {
-      this.writeCJAVal(key, value, timeoutInSeconds);
+      this.writeCJAVal(key, value, timeoutInSeconds, hashValue);
      }
 
    template<typename T>
-   T                 get(const string key)
+   T                 get(const string key, const bool unHashValue = false)
      {
       //     const string type = typename(T);
       //
@@ -219,12 +219,12 @@ public:
       //         return this.readCJAVal(key);
       //        }
 
-      return this.read<T>(key);
+      return this.read<T>(key, unHashValue);
      }
 
-   CJAVal            getCJAVal(const string key)
+   CJAVal            getCJAVal(const string key, const bool unHashValue = false)
      {
-      return this.readCJAVal(key);
+      return this.readCJAVal(key, unHashValue, false);
      }
 
 private:
@@ -252,6 +252,7 @@ private:
 
    void              clear(void) { this.json.Clear(); }
    string            tempValue;
+   string            tempTimeout;
    string            ogName;
    bool              get_result;
    string               tempKey;
@@ -277,7 +278,7 @@ private:
      }
 
    template<typename T>
-   void              write(const string key, const T &value, const int timeoutInSeconds = 15)
+   void              write(const string key, const T &value, const int timeoutInSeconds = 15, const bool hashValue = false)
      {
       this.isExpired(key);
       this.clear();
@@ -288,25 +289,26 @@ private:
 
       if(type == "string")
         {
-         this.json[this.tempKey]["value"] = string(value);
+         this.json[this.tempKey]["value"] = hashValue ? this.hash(value) : (string)value;
          this.json[this.tempKey]["timeout"] = this.timeout(timeoutInSeconds);
         }
       else
          if(type == "datetime")
            {
-            this.json[this.tempKey]["value"] = TimeToString((datetime)value, TIME_DATE | TIME_MINUTES | TIME_SECONDS);
+            this.json[this.tempKey]["value"] = TimeToString(hashValue ? (datetime)this.hash(value) : (datetime)value, TIME_DATE | TIME_MINUTES | TIME_SECONDS);
             this.json[this.tempKey]["timeout"] = this.timeout(timeoutInSeconds);
            }
          else
             if(type == "CJAVal")
               {
                CJAVal temper;
+               temper[this.tempKey]["value"] = hashValue ? this.hash(value) : (string)value;
                temper[this.tempKey]["timeout"] = this.timeout(timeoutInSeconds);
                this.json = temper;
               }
             else
               {
-               this.json[this.tempKey]["value"] = string(value);
+               this.json[this.tempKey]["value"] = hashValue ? this.hash(value) : (string)value;
                this.json[this.tempKey]["timeout"] = this.timeout(timeoutInSeconds);
               }
 
@@ -314,14 +316,21 @@ private:
      }
 
    template<typename T>
-   T                 read(const string key)
+   T                 read(const string key, const bool unHashValue = false)
      {
       this.isExpired(key);
       this.clear();
       this.tempKey = keyToInt(key);
       this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
       this.FileRead();
+
       tempValue = this.json[this.tempKey]["value"].ToStr();
+
+      if(unHashValue)
+        {
+         tempValue = this.unHash<string>(tempValue);
+        }
+
 
       const string type = typename(T);
 
@@ -338,7 +347,6 @@ private:
             return (T)None;
         }
 
-      tempValue = this.json[this.tempKey]["value"].ToStr();
 
       if(tempValue != "" && tempValue != " " && tempValue != None)
          return (T)tempValue;
@@ -346,7 +354,7 @@ private:
          return (T)None;
      }
 
-   bool                 readBool(const string key)
+   bool                 readBool(const string key, const bool unHashValue = false)
      {
       this.isExpired(key);
       this.clear();
@@ -355,31 +363,72 @@ private:
       this.FileRead();
       tempValue = this.json[this.tempKey]["value"].ToStr();
 
-      if(tempValue != "" && tempValue != " " && tempValue != None)
-         return (tempValue == "true");
+      if(!unHashValue)
+        {
+         return tempValue == "true";
+        }
       else
-         return false;
+        {
+         return this.unHash<string>(tempValue) == "true";
+        }
+
+      return false;
      }
 
-   CJAVal                 readCJAVal(const string key)
+   CJAVal                 readCJAVal(const string key, const bool unHashValue = false, bool forCheck = false)
      {
       this.isExpired(key);
       this.clear();
       this.tempKey = keyToInt(key);
       this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
       this.FileRead();
-      return this.json;
+      this.tempValue = this.json[this.tempKey]["value"].ToStr();
+      this.tempTimeout = this.json[this.tempKey]["timeout"].ToStr();
+
+      CJAVal tempJSON;
+
+      if(unHashValue)
+        {
+
+         const string hashed = this.unHash<string>(this.tempValue);
+         tempJSON.Deserialize(hashed, CP_UTF8);
+
+         this.clear();
+         this.json["value"] = tempJSON;
+         this.json["timeout"] = tempTimeout;
+
+         // return entire JSON
+         return this.json;
+        }
+
+      // deserialize value and return
+      tempJSON.Deserialize(this.tempValue, CP_UTF8);
+
+      if(forCheck)
+        {
+         tempJSON["timeout"] = tempTimeout;
+        }
+
+
+      // return entire JSON
+      return tempJSON;
+
      }
 
 
-   void              writeCJAVal(const string key, CJAVal & value, const int timeoutInSeconds = 15)
+   void              writeCJAVal(const string key, CJAVal & value, const int timeoutInSeconds = 15, const bool hashValue = false)
      {
       this.isExpired(key);
       this.clear();
       this.tempKey = keyToInt(key);
       this.filename = "cache" + "\\" + ogName + "\\" + this.tempKey + ".json";
+      this.json[this.tempKey]["value"] = value.Serialize();
 
-      this.json[this.tempKey]["value"] = value;
+      if(hashValue)
+        {
+         this.json[this.tempKey]["value"] = this.hash(value.Serialize());
+        }
+
       this.json[this.tempKey]["timeout"] = this.timeout(timeoutInSeconds);
 
       this.FileWrite(true);
