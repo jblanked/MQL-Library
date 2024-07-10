@@ -3,9 +3,9 @@
 //|                                          Copyright 2023,JBlanked |
 //|                                        https://www.jblanked.com/ |
 //+------------------------------------------------------------------+
-#property copyright "Copyright 2023,JBlanked"
+#property copyright "Copyright 2024,JBlanked"
 #property link      "https://www.jblanked.com/"
-#include <custompairsmt5.mqh>
+
 enum enum_highest_or_lowest
   {
    ENUM_HIGHEST = 0, // Highest
@@ -25,58 +25,147 @@ public:
    template<typename T>
    void                 Append(T & Array[], T arrayValue)
      {
-      ArrayResize(Array, ArraySize(Array) + 1); // increase the size by one
-      Array[ArraySize(Array) - 1] = arrayValue; // assign the last value as the input array value
+      if(!this.Increase(Array))
+         return; // increase array size
+
+      // set last item of list as value
+      Array[this.Count(Array) - 1] = arrayValue;
      }
 
+   // add a value to beginning of list
    template<typename T>
-   bool              Search(const T & Array[], const T & value)
+   void                 Add(T & Array[], T arrayValue)
      {
-      bool is_in = false; // default value
-      for(int i = 0; i < ArraySize(Array); i++) // loop through the items in the list
+      if(!this.Increase(Array))
+         return;
+
+      // shift all elements to the right
+      for(int i = this.Count(Array) - 1; i > 0; i--)
         {
-         is_in = is_in || (Array[i] == value) ? true : false; // if item is same as user input then return true
+         Array[i] = Array[i-1];
         }
-      return is_in; // return the result
+
+      // set first value as value
+      Array[0] = arrayValue;
      }
 
    template<typename T>
-   void              Delete(T & Array[], T value)
+   int               Index(T & Array[], T arrayValue)
      {
+      for(int i = 0; i < this.Count(Array); i++)
+        {
+         if(Array[i] == arrayValue)
+           {
+            return i;
+           }
+        }
+      return -1;
+     }
+
+   template <typename T>
+   bool              Increase(T & Array[])
+     {
+      return ArrayResize(Array,this.Count(Array)+1) > 0;
+     }
+
+   template <typename T>
+   bool              Decrease(T & Array[])
+     {
+      if(this.Count(Array) < 1)
+         return false;
+
+      return ArrayResize(Array,this.Count(Array)-1) >= 0;
+     }
+
+   template <typename T>
+   void              Insert(T & Array[], const T value, const int index)
+     {
+      if(!this.Increase(Array))
+         return;
+
+      // shift all elements to the right
+      for(int i = this.Count(Array) - 1; i > index; i--)
+        {
+         Array[i] = Array[i-1];
+        }
+
+      // set the new value at index
+      Array[index] = value;
+     }
+
+   template <typename T>
+   int               Count(T & Array[])
+     {
+      return ArraySize(Array);
+     }
+
+   template <typename T>
+   int               Count(T & Array[][])
+     {
+      array_counter = 0;
       for(int i = 0; i < ArraySize(Array); i++)
+        {
+         const string tempV = string(Array[i][0]);
+
+         if(Array[i][0] != " " && Array[i][0] != "null" && Array[i][0] != NULL)
+            array_counter++;
+         else
+            break;
+        }
+
+      return array_counter;
+     }
+
+   template<typename T>
+   bool              Search(T & Array[], const T value)
+     {
+      for(int i = 0; i < this.Count(Array); i++) // loop through the items in the list
+        {
+         if(Array[i] == value)
+           {
+            return true;
+           }
+        }
+      return false;
+     }
+
+   template<typename T>
+   void              Delete(T & Array[], const T value)
+     {
+      for(int i = 0; i < this.Count(Array); i++)
          if(Array[i] == value)
             ArrayRemove(Array,i,1);
      }
+
 
    template<typename T>
    void              Erase(T & Array[][], const datetime timeToStartOver)
      {
       if(TimeCurrent() == timeToStartOver)
-         ArrayRemove(Array,0);
+         ZeroMemory(Array);
+     };
+
+   template<typename T>
+   void              Erase(T & Array[], const datetime timeToStartOver)
+     {
+      if(TimeCurrent() == timeToStartOver)
+         ZeroMemory(Array);
      };
 
    template<typename T>
    void              Custom(T & Array[], T value, datetime timeToStartOver)
      {
-      Erase(Array,timeToStartOver);
-      if(!Search(Array,value)) // if user input value isnt in the list
-         Append(Array,value); // create/add the item to the list
+      this.Erase(Array,timeToStartOver); // check erase
+
+      if(!this.Search(Array,value)) // if user input value isnt in the list
+        {
+         this.Append(Array,value); // add the item to the list
+        }
+
      };
 
    void              String_List_To_Array(string string_list, string & Array[], ushort list_separator = ',');
    void              Append_Current_Symbols_To_list(string & Array[]);
-   int               Size(string & Array[][])
-     {
-      array_counter = 0;
-      for(int i = 1; i < ArraySize(Array); i++)
-         if(Array[i][0] != " " && Array[i][0] != "null" && Array[i][0] != NULL)
-            array_counter++;
-         else
-            break;
-
-      return array_counter;
-
-     }
 
    template<typename T>
    T                 GetValue(T & Array[], enum_highest_or_lowest highestOrLowestValue)
@@ -86,7 +175,7 @@ public:
 
       T tempValue = Array[0];
 
-      for(int i=0;i<ArraySize(Array);i++)
+      for(int i=0;i<this.Count(Array);i++)
         {
 
          switch(highestOrLowest)
@@ -114,13 +203,13 @@ public:
    template<typename T>
    int                 GetIndex(T & Array[], enum_highest_or_lowest highestOrLowestValue)
      {
-      if(ArraySize(Array)<1)
+      if(this.Count(Array)<1)
          return EMPTY_VALUE;
 
       T tempValue = Array[0];
       int tempIndex = 0;
 
-      for(int i=0;i<ArraySize(Array);i++)
+      for(int i=0;i<this.Count(Array);i++)
         {
 
          switch(highestOrLowestValue)
