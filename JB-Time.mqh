@@ -11,14 +11,14 @@ int ShellExecuteW(int hwnd, string lpOperation, string lpFile, string lpParamete
 
 #define SW_HIDE 0
 
-enum enum_time_change
+enum ENUM_TIME_INCREMENT
   {
-   Years = 0, // Year
-   Months = 1, // Month
-   Days = 2, // Day
-   Hours = 3, // Hours
-   Minutes = 4, // Minutes
-   Seconds = 5 // Seconds
+   ENUM_YEAR = 0, // Year
+   ENUM_MONTH = 1, // Month
+   ENUM_DAY = 2, // Day
+   ENUM_HOUR = 3, // Hours
+   ENUM_MINUTE = 4, // Minutes
+   ENUM_SECOND = 5 // Seconds
   };
 
 //+------------------------------------------------------------------+
@@ -30,7 +30,7 @@ public:
    bool              allowTime(const bool usetimer,const string startTime,const string stopTime, datetime timeCurrent = 0);
    bool              allowTime(const bool usetimer,const datetime startTime,const datetime stopTime, datetime timeCurrent = 0);
    int               amountOfDays(const int whichMonth, const int whichYear);
-   datetime          changeTime(const datetime initialTime,const int incrementBy, const enum_time_change timeChange=Months);
+   datetime          changeTime(const datetime initialTime,const int incrementBy, const ENUM_TIME_INCREMENT timeChange=ENUM_MONTH);
 
 
    datetime          day(const datetime date, const string timeHoursMinutes)
@@ -203,33 +203,33 @@ bool CTime::allowTime(const bool usetimer,const datetime startTime,const datetim
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
-datetime CTime::changeTime(const datetime initialTime,const int incrementBy, const enum_time_change timeChange=Months)
+datetime CTime::changeTime(const datetime initialTime,const int incrementBy, const ENUM_TIME_INCREMENT timeChange=ENUM_MONTH)
   {
    datetime newTime = initialTime;
 
    switch(timeChange)
      {
-      case Years:
+      case ENUM_YEAR:
          newTime = initialTime + (incrementBy * (PeriodSeconds(PERIOD_D1) * 365));
          break;
 
-      case Months:
+      case ENUM_MONTH:
          newTime = initialTime + (incrementBy * PeriodSeconds(PERIOD_MN1));
          break;
 
-      case Days:
+      case ENUM_DAY:
          newTime = initialTime + (incrementBy * PeriodSeconds(PERIOD_D1));
          break;
 
-      case Hours:
+      case ENUM_HOUR:
          newTime = initialTime + (incrementBy * PeriodSeconds(PERIOD_H1));
          break;
 
-      case Minutes:
+      case ENUM_MINUTE:
          newTime = initialTime + (incrementBy * PeriodSeconds(PERIOD_M1));
          break;
 
-      case Seconds:
+      case ENUM_SECOND:
          newTime = initialTime + incrementBy;
          break;
 
