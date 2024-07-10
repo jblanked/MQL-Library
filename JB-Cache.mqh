@@ -393,12 +393,13 @@ private:
          const string hashed = this.unHash<string>(this.tempValue);
          tempJSON.Deserialize(hashed, CP_UTF8);
 
-         this.clear();
-         this.json["value"] = tempJSON;
-         this.json["timeout"] = tempTimeout;
+         if(forCheck)
+           {
+            tempJSON["timeout"] = tempTimeout;
+           }
 
          // return entire JSON
-         return this.json;
+         return tempJSON;
         }
 
       // deserialize value and return
