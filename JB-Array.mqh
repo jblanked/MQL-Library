@@ -64,6 +64,33 @@ public:
 
       this.data[0] = value;
       return &this;
+
+     }
+
+   void                 add(const LT & arrayValue)
+     {
+      if(!this.increase())
+        {
+         return;
+        }
+
+      for(int i = this.count() - 1; i > 0; i--)
+        {
+         this.data[i] = this.data[i-1];
+        }
+
+      this.data[0] = arrayValue;
+     }
+
+
+   void                 append(const LT & arrayValue)
+     {
+      if(!this.increase())
+        {
+         return;
+        }
+
+      this.data[this.count() - 1] = arrayValue;
      }
 
    int               count()
@@ -74,6 +101,7 @@ public:
    void              clear()
      {
       ZeroMemory(this.data);
+      ArrayResize(this.data,0);
      }
 
    bool              decrease()
@@ -86,9 +114,23 @@ public:
       return ArrayResize(this.data,this.count()+1) > 0;
      }
 
+
    void              print()
      {
       ArrayPrint(this.data);
+     }
+
+
+   void              removeAt(const int index)
+     {
+
+      for(int i = index; i < this.count() - 1; i++)
+        {
+         this.data[i] = this.data[i+1];
+        }
+
+      this.decrease();
+
      }
   };
 
@@ -213,6 +255,7 @@ public:
    void              clear()
      {
       ZeroMemory(this.data);
+      ArrayResize(this.data,0);
      }
 
    bool              decrease()
@@ -459,14 +502,22 @@ public:
    void              Erase(T & Array[][], const datetime timeToStartOver)
      {
       if(TimeCurrent() == timeToStartOver)
+        {
          ZeroMemory(Array);
+         ArrayResize(Array,0);
+        }
+
      };
 
    template<typename T>
    void              Erase(T & Array[], const datetime timeToStartOver)
      {
       if(TimeCurrent() == timeToStartOver)
+        {
          ZeroMemory(Array);
+         ArrayResize(Array,0);
+        }
+
      };
 
    template<typename T>
