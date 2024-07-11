@@ -6,6 +6,313 @@
 #property copyright "Copyright 2024,JBlanked"
 #property link      "https://www.jblanked.com/"
 
+template<typename LT>
+class CJBListObject
+  {
+protected:
+   LT                 data[];
+private:
+   int               expand()
+     {
+      const int n = this.count();
+      this.increase();
+      return n;
+     }
+public:
+
+   // read elements
+   LT                operator[](int i) const
+     {
+      return data[i];
+     }
+
+   // append
+   CJBListObject *         operator<<(const LT & value)
+     {
+      this.data[expand()] = (LT)value;
+      return &this;
+     }
+
+   // removeAt
+   CJBListObject *          operator>>(const int index)
+     {
+      for(int i = index; i < this.count() - 1; i++)
+        {
+         this.data[i] = this.data[i+1];
+        }
+
+      this.decrease();
+      return &this;
+     }
+
+   // clear
+   CJBListObject *          operator>(const LT & value)
+     {
+      this.clear();
+      return &this;
+     }
+
+   // add
+   CJBListObject *          operator<(const LT & value)
+     {
+      this.increase();
+
+      for(int i = this.count() - 1; i > 0; i--)
+        {
+         this.data[i] = this.data[i-1];
+        }
+
+      this.data[0] = value;
+      return &this;
+     }
+
+   int               count()
+     {
+      return ArraySize(this.data);
+     }
+
+   void              clear()
+     {
+      ZeroMemory(this.data);
+     }
+
+   bool              decrease()
+     {
+      return ArrayResize(this.data,this.count()-1) > 0;
+     }
+
+   bool              increase()
+     {
+      return ArrayResize(this.data,this.count()+1) > 0;
+     }
+
+   void              print()
+     {
+      ArrayPrint(this.data);
+     }
+  };
+
+
+template<typename T>
+class CJBList
+  {
+protected:
+   T                 data[];
+private:
+   int               expand()
+     {
+      const int n = this.count();
+      this.increase();
+      return n;
+     }
+public:
+
+   // read elements
+   T                 operator[](int i) const
+     {
+      return data[i];
+     }
+
+   // append
+   CJBList *         operator<<(const T & value)
+     {
+      this.data[expand()] = (T)value;
+      return &this;
+     }
+
+   // removeAt
+   CJBList *          operator>>(const int index)
+     {
+      for(int i = index; i < this.count() - 1; i++)
+        {
+         this.data[i] = this.data[i+1];
+        }
+
+      this.decrease();
+      return &this;
+     }
+
+   // clear
+   CJBList *          operator>(const T & value)
+     {
+      this.clear();
+      return &this;
+     }
+
+   // add
+   CJBList *          operator<(const T & value)
+     {
+      this.increase();
+
+      for(int i = this.count() - 1; i > 0; i--)
+        {
+         this.data[i] = this.data[i-1];
+        }
+
+      this.data[0] = value;
+      return &this;
+     }
+
+
+   void                 add(T & arrayValue)
+     {
+      if(!this.increase())
+        {
+         return;
+        }
+
+      for(int i = this.count() - 1; i > 0; i--)
+        {
+         this.data[i] = this.data[i-1];
+        }
+
+      this.data[0] = arrayValue;
+     }
+
+   void                 add(const T arrayValue)
+     {
+      if(!this.increase())
+        {
+         return;
+        }
+
+      for(int i = this.count() - 1; i > 0; i--)
+        {
+         this.data[i] = this.data[i-1];
+        }
+
+      this.data[0] = arrayValue;
+     }
+
+
+   void                 append(T & arrayValue)
+     {
+      if(!this.increase())
+        {
+         return;
+        }
+
+      this.data[this.count() - 1] = arrayValue;
+     }
+
+   void                 append(const T arrayValue)
+     {
+      if(!this.increase())
+        {
+         return;
+        }
+
+      this.data[this.count() - 1] = arrayValue;
+     }
+
+   int               count()
+     {
+      return ArraySize(this.data);
+     }
+
+   void              clear()
+     {
+      ZeroMemory(this.data);
+     }
+
+   bool              decrease()
+     {
+      return ArrayResize(this.data,this.count()-1) > 0;
+     }
+
+   void              remove(T & value)
+     {
+      for(int i = 0; i < this.count(); i++)
+        {
+         if(this.data[i] == value)
+           {
+            for(int j = i; i < this.count() - 1; i++)
+              {
+               this.data[i] = this.data[i+1];
+              }
+           }
+        }
+
+      this.decrease();
+     }
+
+   void              remove(const T value)
+     {
+      for(int i = 0; i < this.count(); i++)
+        {
+         if(this.data[i] == value)
+           {
+            for(int j = i; i < this.count() - 1; i++)
+              {
+               this.data[i] = this.data[i+1];
+              }
+           }
+        }
+
+      this.decrease();
+     }
+
+   void              removeAt(const int index)
+     {
+
+      for(int i = index; i < this.count() - 1; i++)
+        {
+         this.data[i] = this.data[i+1];
+        }
+
+      this.decrease();
+
+     }
+
+
+   bool              increase()
+     {
+      return ArrayResize(this.data,this.count()+1) > 0;
+     }
+
+   int               index(T arrayValue)
+     {
+      for(int i = 0; i < this.count(); i++)
+        {
+         if(this.data[i] == arrayValue)
+           {
+            return i;
+           }
+        }
+      return -1;
+     }
+
+   void              print()
+     {
+      ArrayPrint(this.data);
+     }
+
+   bool              search(T & value)
+     {
+      for(int i = 0; i < this.count(); i++) // loop through the items in the list
+        {
+         if(this.data[i] == value)
+           {
+            return true;
+           }
+        }
+      return false;
+     }
+
+   bool              search(const T value)
+     {
+      for(int i = 0; i < this.count(); i++) // loop through the items in the list
+        {
+         if(this.data[i] == value)
+           {
+            return true;
+           }
+        }
+      return false;
+     }
+
+  };
+
 enum enum_highest_or_lowest
   {
    ENUM_HIGHEST = 0, // Highest
@@ -132,9 +439,19 @@ public:
    template<typename T>
    void              Delete(T & Array[], const T value)
      {
+
       for(int i = 0; i < this.Count(Array); i++)
+        {
          if(Array[i] == value)
-            ArrayRemove(Array,i,1);
+           {
+            for(int j = i; i < this.Count(Array) - 1; i++)
+              {
+               Array[i] = Array[i+1];
+              }
+           }
+        }
+
+      this.decrease();
      }
 
 
