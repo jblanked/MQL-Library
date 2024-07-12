@@ -273,6 +273,7 @@ public:
               {
                this.data[i] = this.data[i+1];
               }
+            break;
            }
         }
 
@@ -289,6 +290,7 @@ public:
               {
                this.data[i] = this.data[i+1];
               }
+            break;
            }
         }
 
