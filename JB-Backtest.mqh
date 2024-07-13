@@ -151,6 +151,16 @@ public:
 
      }
 
+   bool              ask(const string message = "Would you like to run a backtest of your current settings?", const bool openFolder = false)
+     {
+      if(MessageBox(message, "Alert", MB_YESNO | MB_ICONQUESTION) == 6)
+        {
+         this.run(openFolder, false);
+         return true;
+        }
+      return false;
+     }
+
    bool              closeOtherCharts(void)
      {
       bool Res=false;
