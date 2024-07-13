@@ -151,7 +151,7 @@ public:
 
      }
 
-   bool              ask(const string message = "Would you like to run a backtest of your current settings?", const bool openFolder = false)
+   bool              ask(const bool openFolder = false, const string message = "Would you like to run a backtest of your current settings?")
      {
       if(MessageBox(message, "Alert", MB_YESNO | MB_ICONQUESTION) == 6)
         {
