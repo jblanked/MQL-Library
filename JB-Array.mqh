@@ -117,7 +117,11 @@ public:
 
    void              print()
      {
+#ifdef __MQL5__
       ArrayPrint(this.data);
+#else
+
+#endif
      }
 
 
@@ -329,7 +333,11 @@ public:
 
    void              print()
      {
+#ifdef __MQL5__
       ArrayPrint(this.data);
+#else
+
+#endif
      }
 
    bool              search(T & value)
@@ -545,7 +553,7 @@ public:
 
       T tempValue = Array[0];
 
-      for(int i=0;i<this.Count(Array);i++)
+      for(int i=0; i<this.Count(Array); i++)
         {
 
          switch(highestOrLowest)
@@ -579,7 +587,7 @@ public:
       T tempValue = Array[0];
       int tempIndex = 0;
 
-      for(int i=0;i<this.Count(Array);i++)
+      for(int i=0; i<this.Count(Array); i++)
         {
 
          switch(highestOrLowestValue)
