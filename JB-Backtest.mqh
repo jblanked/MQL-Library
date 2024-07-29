@@ -138,7 +138,7 @@ public:
      }
 
    template <typename T>
-   void              addSetting(const string & inputVariable, const T tempValue)
+   void              addSetting(const string inputVariable, T tempValue)
      {
       if(!this.inputsAdded)
         {
@@ -151,9 +151,13 @@ public:
 
      }
 
-   bool              ask(const bool openFolder = false, const string message = "Would you like to run a backtest of your current settings?")
+   bool              ask(
+      const bool openFolder = false,
+      const string message = "Would you like to run a backtest of your current settings? (Note: Not recommended on a VPS)",
+      const string title = "Alert"
+   )
      {
-      if(MessageBox(message, "Alert", MB_YESNO | MB_ICONQUESTION) == 6)
+      if(MessageBox(message, title, MB_YESNO | MB_ICONQUESTION) == 6)
         {
          this.run(openFolder, false);
          return true;
@@ -290,7 +294,7 @@ private:
    template <typename T>
    bool              isEmpty(const T & value)
      {
-      return value == NULL || (string)value == "" || (int)value==0;
+      return value == NULL || (string)value == "" || (int)value == 0 || (double)value == EMPTY_VALUE;
      }
 
   };

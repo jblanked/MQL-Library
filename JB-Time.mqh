@@ -100,6 +100,10 @@ public:
      }
 
    datetime          stringToTime(const string time, const datetime timeCurrent = 0);
+   ENUM_TIMEFRAMES   periodCurrentToTimeframe(const ENUM_TIMEFRAMES periodCurrent)
+     {
+      return periodCurrent == PERIOD_CURRENT ? Period() : periodCurrent;
+     }
   };
 
 //+------------------------------------------------------------------+

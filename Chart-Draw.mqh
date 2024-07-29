@@ -110,6 +110,7 @@ void CChartDraw::Chart_Arrow(string name, enum_up_down up_down, double price, da
    ObjectSetInteger(0, object_name, OBJPROP_HIDDEN, true);
    ObjectSetInteger(0, object_name, OBJPROP_ZORDER, 0);
    ObjectSetInteger(0, object_name, OBJPROP_FILL, true);
+   ObjectSetInteger(0, object_name, OBJPROP_ARROWCODE, up_down == Up ? 233 : 244);
    }
 }
 
@@ -182,6 +183,7 @@ void CChartDraw::Chart_Trend_Line(string name, datetime time_1, double price_1, 
       ObjectSetInteger(0, object_name, OBJPROP_SELECTED, false);
       ObjectSetInteger(0, object_name, OBJPROP_HIDDEN, true);
       ObjectSetInteger(0, object_name, OBJPROP_ZORDER, 0);
+      ObjectSetInteger(0, object_name, OBJPROP_RAY_RIGHT, false);
    }
 }
 
