@@ -97,7 +97,7 @@ public:
       this.tempName = "cache" + "\\" + "json" + "\\" + tempoName + "time.json";
       this.tempHandle = ::FileOpen(this.tempName, FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_BIN);
       this.tempDate = (datetime)::FileGetInteger(this.tempHandle,FILE_CREATE_DATE);
-      ::FileDelete(this.tempName, FILE_COMMON);
+      ::FileDelete(tempoName, FILE_COMMON);
       ::FileClose(tempHandle);
       return this.tempDate;
      };
