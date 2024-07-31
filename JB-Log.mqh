@@ -50,14 +50,20 @@ public:
      }
 
    template <typename T>
-   void              Alert(const T alertMessage)
+   void              log(const T alertMessage)
+     {
+      this.add(string(alertMessage));
+     }
+
+   template <typename T>
+   void              alert(const T alertMessage)
      {
       ::Alert(alertMessage);
       this.add(string(alertMessage));
      }
 
    template <typename T>
-   void              Comment(const T commentMessage)
+   void              comment(const T commentMessage)
      {
       ::Comment(commentMessage);
       this.add(string(commentMessage));
@@ -72,14 +78,14 @@ public:
      }
 
    template <typename T>
-   void              Print(const T printMessage)
+   void              print(const T printMessage)
      {
       ::Print(printMessage);
       this.add(string(printMessage));
      }
 
    template <typename T>
-   void              SendNotification(const T notificationMessage)
+   void              sendNotification(const T notificationMessage)
      {
       ::SendNotification(notificationMessage);
       this.add(string(notificationMessage));
@@ -124,7 +130,7 @@ private:
         }
 
       // add to log cache
-      this.cache.setCJAVal(this.m_name + "CListViewItems", this.json, 60 * 60 * 24, false);
+      this.cache.setCJAVal(this.m_name + "CListViewItems", this.json, 60 * 60 * 24 * 30, false);
      };
 
    string            time(void)
