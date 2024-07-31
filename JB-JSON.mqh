@@ -28,8 +28,8 @@ public:
       this.filehandle = INVALID_HANDLE; // Initialize filehandle to INVALID_HANDLE in the constructor
       this.filename = "";
       this.json = new CJAVal();
-      ArrayResize(this.Bytes,0);
-      ArrayResize(this.file_content,0);
+      ::ArrayResize(this.Bytes,0);
+      ::ArrayResize(this.file_content,0);
      }
 
    JSON::           ~JSON(void) // deconstructor
@@ -37,14 +37,14 @@ public:
       this.filehandle = INVALID_HANDLE; // Initialize filehandle to INVALID_HANDLE in the constructor
       this.filename = "";
       delete this.json;
-      ArrayResize(this.Bytes,0);
-      ArrayResize(this.file_content,0);
+      ::ArrayResize(this.Bytes,0);
+      ::ArrayResize(this.file_content,0);
      }
 
 
    CJAVal            *json;
    string            filename;
-   void              FileDelete() {if(FileIsExist(this.filename, FILE_COMMON))::FileDelete(this.filename, FILE_COMMON);};
+   void              FileDelete() {if(::FileIsExist(this.filename, FILE_COMMON))::FileDelete(this.filename, FILE_COMMON);};
 
    int               FileOpen()
      {
@@ -58,30 +58,30 @@ public:
          this.FileDelete();
         }
       this.filehandle = this.FileOpen();
-      ArrayResize(this.file_content, StringToCharArray(this.json.Serialize(), this.file_content, 0, WHOLE_ARRAY) - 1);
-      FileWriteArray(this.filehandle, this.file_content);
-      FileClose(this.filehandle);
+      ::ArrayResize(this.file_content, ::StringToCharArray(this.json.Serialize(), this.file_content, 0, WHOLE_ARRAY) - 1);
+      ::FileWriteArray(this.filehandle, this.file_content);
+      ::FileClose(this.filehandle);
      }
 
    void              FileRead()
      {
-      if(FileIsExist(this.filename, FILE_COMMON))
+      if(::FileIsExist(this.filename, FILE_COMMON))
         {
          this.filehandle = this.FileOpen();
-         FileReadArray(this.filehandle,this.file_content);
-         this.json.Deserialize(CharArrayToString(this.file_content), CP_UTF8);
-         FileClose(this.filehandle);
+         ::FileReadArray(this.filehandle,this.file_content);
+         this.json.Deserialize(::CharArrayToString(this.file_content), CP_UTF8);
+         ::FileClose(this.filehandle);
         }
 
      }
 
    datetime           FileTime()
      {
-      if(FileIsExist(this.filename, FILE_COMMON))
+      if(::FileIsExist(this.filename, FILE_COMMON))
         {
          this.filehandle = this.FileOpen();
-         this.fileDate = (datetime)FileGetInteger(this.filehandle,FILE_CREATE_DATE);
-         FileClose(this.filehandle);
+         this.fileDate = (datetime)::FileGetInteger(this.filehandle,FILE_CREATE_DATE);
+         ::FileClose(this.filehandle);
          return this.fileDate;
         }
 
@@ -90,16 +90,15 @@ public:
 
    datetime          TimeCurrent(void)
      {
-      this.tempName = "cache" + "\\" + "json" + "\\" + "time.json";
-
-      if(FileIsExist(this.tempName, FILE_COMMON))
-        {
-         ::FileDelete(this.tempName, FILE_COMMON);
-        }
-
+      string tempoName = string(::TimeCurrent());
+      ::StringReplace(tempoName,":","-");
+      ::StringReplace(tempoName," ","-");
+      ::StringReplace(tempoName,"  ","-");
+      this.tempName = "cache" + "\\" + "json" + "\\" + tempoName + "time.json";
       this.tempHandle = ::FileOpen(this.tempName, FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_BIN);
-      this.tempDate = (datetime)FileGetInteger(this.tempHandle,FILE_CREATE_DATE);
-      FileClose(tempHandle);
+      this.tempDate = (datetime)::FileGetInteger(this.tempHandle,FILE_CREATE_DATE);
+      ::FileDelete(this.tempName, FILE_COMMON);
+      ::FileClose(tempHandle);
       return this.tempDate;
      };
 
