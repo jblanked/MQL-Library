@@ -36,8 +36,17 @@ public:
         {
          this.panel.Destroy();
         }
-      delete this.cache;
-      delete this.panel;
+
+      if(this.cache != NULL)
+        {
+         delete this.cache;
+        }
+
+      if(this.panel != NULL)
+        {
+         delete this.panel;
+        }
+
      }
 
    template <typename T>
