@@ -13,24 +13,27 @@
 class CIndicator: public CJBArray
   {
 public:
-   // constructor - Init
+   //--- constructor - Init
                      CIndicator::CIndicator(void)
      {
       this.setAsSeries();
      };
 
-   // deconstructor - deInit
+   //--- deconstructor - deInit
    CIndicator::     ~CIndicator(void)
      {
 
 
      };
 
-   double            iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, const int maPeriod, const int maShift, const ENUM_MA_METHOD maMethod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
-   double            iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, const int rsiPeriod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
-   double            iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, const int atrPeriod, const int shift, const bool copyBuffer = true);
-   double            iCustom(const string symbol,const ENUM_TIMEFRAMES timeframe,const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 0, const bool copyBuffer=true);
+   //--- create indicator buffers with draw attributes
+#ifdef __MQL5__
+   bool              createBuffer(const string name, const ENUM_DRAW_TYPE drawType, const ENUM_LINE_STYLE style, const color color_, const int width, const int index, double & dataArray[], const bool showData = true, const ENUM_INDEXBUFFER_TYPE bufferType = INDICATOR_DATA, const int arrowCode = 233);
+#else
+   bool              createBuffer(const string name, const int drawType, const ENUM_LINE_STYLE style, const color color_, const int width, const int index, double & dataArray[], const bool showData = true, const ENUM_INDEXBUFFER_TYPE bufferType = INDICATOR_DATA, const int arrowCode = 233);
+#endif
 
+   //--- delete pointer safely
    bool              deletePointer(void *ptr)
      {
       if(CheckPointer(ptr) == POINTER_DYNAMIC)
@@ -41,6 +44,19 @@ public:
         }
       return false;
      }
+
+   //--- max bars
+   double            getMaxBars(const string symbol, const ENUM_TIMEFRAMES timeframe, const int userMaximum = 5000)
+     {
+      return Bars(symbol,timeframe) > userMaximum ? userMaximum : Bars(symbol,timeframe);
+     }
+
+   //--- direct indcator values
+   double            iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, const int maPeriod, const int maShift, const ENUM_MA_METHOD maMethod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
+   double            iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, const int rsiPeriod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
+   double            iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, const int atrPeriod, const int shift, const bool copyBuffer = true);
+   double            iCustom(const string symbol,const ENUM_TIMEFRAMES timeframe,const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 0, const bool copyBuffer=true);
+
 private:
 
    //--- Helper class
@@ -272,5 +288,67 @@ double CIndicator::iCustom(const string symbol,const ENUM_TIMEFRAMES timeframe,c
 #else
    return ::iCustom(symbol, timeframe,  indicatorAndFolderNameOnly + ".ex4", buffer, shift);
 #endif
+  }
+//+------------------------------------------------------------------+
+#ifdef __MQL5__
+bool CIndicator::createBuffer(const string name,const ENUM_DRAW_TYPE drawType,const ENUM_LINE_STYLE style,const color color_,const int width,const int index,double &dataArray[],const bool showData=true,const ENUM_INDEXBUFFER_TYPE bufferType=0,const int arrowCode=233)
+#else
+bool CIndicator::createBuffer(const string name,const int drawType,const ENUM_LINE_STYLE style,const color color_,const int width,const int index,double &dataArray[],const bool showData=true,const ENUM_INDEXBUFFER_TYPE bufferType=0,const int arrowCode=233)
+#endif
+  {
+   if(!::SetIndexBuffer(index,dataArray,bufferType))
+     {
+      ::Print("Failed to set buffer for " + name + " at index " + (string)index);
+      return false;
+     }
+
+   if(!::PlotIndexSetString(index,PLOT_LABEL,name))
+     {
+      ::Print("Failed to set label for " + name + " at index " + (string)index);
+      return false;
+     }
+
+   if(!::PlotIndexSetInteger(index,PLOT_DRAW_TYPE,drawType))
+     {
+      ::Print("Failed to set draw type for " + name + " at index " + (string)index);
+      return false;
+     }
+
+   if(!::PlotIndexSetInteger(index,PLOT_LINE_STYLE,style))
+     {
+      ::Print("Failed to set draw style for " + name + " at index " + (string)index);
+      return false;
+     }
+
+   if(!::PlotIndexSetInteger(index,PLOT_LINE_COLOR,color_))
+     {
+      ::Print("Failed to set color for " + name + " at index " + (string)index);
+      return false;
+     }
+
+   if(!::PlotIndexSetInteger(index,PLOT_LINE_WIDTH,width))
+     {
+      ::Print("Failed to set width for " + name + " at index " + (string)index);
+      return false;
+     }
+
+
+#ifdef __MQL5__
+   if(!::PlotIndexSetInteger(index,PLOT_ARROW,arrowCode))
+     {
+      ::Print("Failed to set arrow code for " + name + " at index " + (string)index);
+      return false;
+     }
+#else
+   SetIndexArrow(index,arrowCode);
+#endif
+
+   if(!PlotIndexSetInteger(index,PLOT_SHOW_DATA,showData))
+     {
+      ::Print("Failed to set data display for " + name + " at index " + (string)index);
+      return false;
+     }
+
+   return true;
   }
 //+------------------------------------------------------------------+
