@@ -46,7 +46,7 @@ public:
      }
 
    //--- max bars
-   double            getMaxBars(const string symbol, const ENUM_TIMEFRAMES timeframe, const int userMaximum = 5000)
+   int               getMaxBars(const string symbol, const ENUM_TIMEFRAMES timeframe, const int userMaximum = 5000)
      {
       return Bars(symbol,timeframe) > userMaximum ? userMaximum : Bars(symbol,timeframe);
      }
@@ -272,7 +272,7 @@ double CIndicator::iCustom(const string symbol,const ENUM_TIMEFRAMES timeframe,c
 
       if(this.temp.handle == EMPTY_VALUE)
         {
-         ::Print("Failed to set ", indicatorAndFolderNameOnly);
+         ::Alert("Failed to set ", indicatorAndFolderNameOnly);
 
          return EMPTY_VALUE;
         }
@@ -302,18 +302,17 @@ bool CIndicator::createBuffer(const string name,const int drawType,const ENUM_LI
       return false;
      }
 
+#ifdef __MQL5__
    if(!::PlotIndexSetString(index,PLOT_LABEL,name))
      {
       ::Print("Failed to set label for " + name + " at index " + (string)index);
       return false;
      }
-
    if(!::PlotIndexSetInteger(index,PLOT_DRAW_TYPE,drawType))
      {
       ::Print("Failed to set draw type for " + name + " at index " + (string)index);
       return false;
      }
-
    if(!::PlotIndexSetInteger(index,PLOT_LINE_STYLE,style))
      {
       ::Print("Failed to set draw style for " + name + " at index " + (string)index);
@@ -332,22 +331,27 @@ bool CIndicator::createBuffer(const string name,const int drawType,const ENUM_LI
       return false;
      }
 
-
-#ifdef __MQL5__
    if(!::PlotIndexSetInteger(index,PLOT_ARROW,arrowCode))
      {
       ::Print("Failed to set arrow code for " + name + " at index " + (string)index);
       return false;
      }
-#else
-   SetIndexArrow(index,arrowCode);
-#endif
 
    if(!PlotIndexSetInteger(index,PLOT_SHOW_DATA,showData))
      {
       ::Print("Failed to set data display for " + name + " at index " + (string)index);
       return false;
      }
+
+#else
+   ::SetIndexStyle(index,DRAW_LINE,style,width,color_);
+   ::SetIndexLabel(index,name);
+   ::SetIndexArrow(index,arrowCode);
+#endif
+
+
+//::ArraySetAsSeries(dataArray,true);
+//::ArrayInitialize(dataArray,EMPTY_VALUE);
 
    return true;
   }
