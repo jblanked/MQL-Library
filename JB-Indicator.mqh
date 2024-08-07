@@ -53,6 +53,7 @@ public:
 
    //--- direct indcator values
    double            iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, const int maPeriod, const int maShift, const ENUM_MA_METHOD maMethod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
+   double            iMAOnArray(double & array[],const int period, const int maShift, const ENUM_MA_METHOD maMethod, const int shift);
    double            iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, const int rsiPeriod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
    double            iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, const int atrPeriod, const int shift, const bool copyBuffer = true);
    double            iCustom(const string symbol,const ENUM_TIMEFRAMES timeframe,const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 0, const bool copyBuffer=true);
@@ -288,6 +289,199 @@ double CIndicator::iCustom(const string symbol,const ENUM_TIMEFRAMES timeframe,c
 #else
    return ::iCustom(symbol, timeframe,  indicatorAndFolderNameOnly + ".ex4", buffer, shift);
 #endif
+  }
+//+------------------------------------------------------------------+
+double CIndicator::iMAOnArray(double &array[],const int period,const int maShift,const ENUM_MA_METHOD maMethod,const int shift)
+  {
+
+   double buf[], arr[];
+   int total = ArraySize(array);
+
+   if(total <= period)
+      return 0;
+
+   if(shift > total - period - maShift)
+      return 0;
+
+   switch(maMethod)
+     {
+
+      case MODE_SMA:
+        {
+
+         total = ArrayCopy(arr, array, 0, shift + maShift, period);
+         if(ArrayResize(buf, total) < 0)
+            return 0;
+
+         double sum = 0;
+         int i, pos = total-1;
+
+         for(i = 1; i < period; i++, pos--)
+
+            sum += arr[pos];
+
+         while(pos >= 0)
+           {
+
+            sum += arr[pos];
+
+            buf[pos] = sum / period;
+
+            sum -= arr[pos + period - 1];
+
+            pos--;
+
+           }
+
+         return buf[0];
+
+        }
+
+
+
+      case MODE_EMA:
+        {
+
+         if(ArrayResize(buf, total) < 0)
+
+            return 0;
+
+         double pr = 2.0 / (period + 1);
+
+         int posti = total - 2;
+
+
+
+         while(posti >= 0)
+           {
+
+            if(posti == total - 2)
+
+               buf[posti+1] = array[posti+1];
+
+            buf[posti] = array[posti] * pr + buf[posti+1] * (1-pr);
+
+            posti--;
+
+           }
+
+         return buf[shift+maShift];
+
+        }
+
+
+
+      case MODE_SMMA:
+        {
+
+         if(ArrayResize(buf, total) < 0)
+
+            return(0);
+
+         double summ = 0;
+
+         int j, k, poss;
+
+
+
+         poss = total - period;
+
+         while(poss >= 0)
+           {
+
+            if(poss == total - period)
+              {
+
+               for(j = 0, k = poss; j < period; j++, k++)
+                 {
+
+                  summ += array[k];
+
+                  buf[k] = 0;
+
+                 }
+
+              }
+
+            else
+
+               summ = buf[poss+1] * (period-1) + array[poss];
+
+            buf[poss]=summ/period;
+
+            poss--;
+
+           }
+
+         return buf[shift+maShift];
+
+        }
+
+
+
+      case MODE_LWMA:
+        {
+
+         if(ArrayResize(buf, total) < 0)
+
+            return 0;
+
+         double dsum = 0.0, lsum = 0.0;
+
+         double price;
+
+         int m, weight = 0, posit = total-1;
+
+
+
+         for(m = 1; m <= period; m++, posit--)
+           {
+
+            price = array[posit];
+
+            dsum += price * m;
+
+            lsum += price;
+
+            weight += m;
+
+           }
+
+         posit++;
+
+         m = posit + period;
+
+         while(posit >= 0)
+           {
+
+            buf[posit] = dsum / weight;
+
+            if(posit == 0)
+
+               break;
+
+            posit--;
+
+            m--;
+
+            price = array[posit];
+
+            dsum = dsum - lsum + price * period;
+
+            lsum -= array[m];
+
+            lsum += price;
+
+           }
+
+         return buf[shift+maShift];
+
+        }
+
+     }
+
+   return 0;
+
   }
 //+------------------------------------------------------------------+
 #ifdef __MQL5__
