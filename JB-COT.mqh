@@ -13,6 +13,7 @@
 //+------------------------------------------------------------------+
 enum ENUM_COT_CODES
   {
+   CODE_EMPTY              = 1,  // Empty
    CODE_CANADIAN_DOLLAR    = 0,  // Canadian Dollar: Code-090741
    CODE_SWISS_FRANC        = 1,  // Swiss Franc: Code-092741
    CODE_BRITISH_POUND      = 2,  // British Pound: Code-096742
@@ -85,10 +86,12 @@ public:
          Print("Access to https://www.cftc.gov/ was denied. Try again at " + TimeToString(TimeLocal() + 3600));
 
          // if save file exists
-         if(::FileIsExist("COT-Save.txt", FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_BIN))
+         if(this.fileExists("COT-Save.txt"))
            {
             // duplicate the save file as COT.txt
             this.fileDuplicate(this.commonFilesFolder() + "COT-Save.txt",  this.commonFilesFolder() + "COT.txt");
+            this.fileClose("COT-Save.txt");
+            this.fileClose("COT.txt");
 
             // attempt to read file
             if(!this.fileRead(false, "COT-Save.txt"))
@@ -97,7 +100,7 @@ public:
               }
 
             Print("COT data for the week of " + this.getCOTDate() + "saved successfully at " + this.commonFilesFolder() + "COT.txt");
-            this.fileClose();
+            this.fileClose("COT-Save.txt");
             return true;
            }
          else // failed to download and save file doesn't exist
@@ -115,7 +118,7 @@ public:
       this.fileDuplicate(this.commonFilesFolder() + "COT.txt",  this.commonFilesFolder() + "COT-Save.txt");
       Print("COT data for the week of " + this.getCOTDate() + "saved successfully at " + this.commonFilesFolder() + "COT.txt");
 
-      this.fileClose();
+      this.fileClose("COT.txt");
       return true;
      }
 
@@ -132,34 +135,26 @@ private:
    int               mHandle;
 
    //--- checks if COT file is empty
-   bool              emptyFile(void)
+   bool              emptyFile(const string cotFileName = "COT.txt")
      {
-      if(!this.fileExists())
+      if(!this.fileExists(cotFileName))
         {
          return false;
         }
-      const string stringResult = FileReadString(this.fileHandle());
 
-      if(stringResult != "")
-        {
-         return false;
-        }
-      else
-        {
-         return true;
-        }
+      return ::FileReadString(this.fileHandle(false, cotFileName)) != NULL;
      }
 
    //--- close file after use
-   void              fileClose(void)
+   void              fileClose(const string cotFileName = "COT.txt")
      {
-      FileClose(this.fileHandle(true));
+      ::FileClose(this.fileHandle(true, cotFileName));
      }
 
    //--- checks if COT file exists
    bool              fileExists(const string cotFileName = "COT.txt")
      {
-      if(!FileIsExist(cotFileName, FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_BIN))
+      if(!FileIsExist(cotFileName, FILE_READ | FILE_COMMON | FILE_BIN))
         {
          Print(this.commonFilesFolder() + cotFileName + " does not exist yet");
          return false;
@@ -169,14 +164,21 @@ private:
      }
 
    //--- get file handle
-   int               fileHandle(const bool isSet = false, const string cotFileName = "COT.txt")
+   int               fileHandle(const bool isSet = false, const string cotFileName = "COT.txt", const bool writeToFile = false)
      {
       if(isSet)
         {
          return this.mHandle;
         }
 
-      this.mHandle = FileOpen(cotFileName, FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_BIN | FILE_TXT | FILE_ANSI);
+      if(!writeToFile)
+        {
+         this.mHandle = FileOpen(cotFileName, FILE_READ | FILE_COMMON | FILE_BIN | FILE_TXT | FILE_ANSI);
+        }
+      else
+        {
+         this.mHandle = FileOpen(cotFileName, FILE_READ | FILE_WRITE | FILE_COMMON | FILE_BIN | FILE_TXT | FILE_ANSI);
+        }
 
       return this.mHandle;
      }
@@ -184,16 +186,18 @@ private:
    //--- reads file and adds each line to this.cotData[]
    bool              fileRead(const bool isNewFile = false, const string cotFileName = "COT.txt")
      {
-      if(!this.fileExists())
+      if(!this.fileExists(cotFileName))
         {
          return false;
         }
 
+      Sleep(1000); // wait one second
+
       //--- read data from the file
       const string tempFile = FileReadString(this.fileHandle(false, cotFileName));
-      this.fileClose();
+      this.fileClose(cotFileName);
 
-      if(tempFile == "")
+      if(tempFile == NULL)
         {
          Print(this.commonFilesFolder() + cotFileName + " is empty.");
          return false;
@@ -208,8 +212,8 @@ private:
          this.cotFile = StringSubstr(tempFile, StringFind(tempFile, "Traders in Financial Futures"));
 
          // replace file
-         ::FileWriteString(this.fileHandle(false, cotFileName), this.cotFile);
-         this.fileClose();
+         ::FileWriteString(this.fileHandle(false, cotFileName, true), this.cotFile);
+         this.fileClose(cotFileName);
         }
 
       if(!this.readFileToArray())
@@ -229,6 +233,10 @@ private:
    // sets the this.cotTemp with the section of the COT code
    bool              getSection(const ENUM_COT_CODES cotCode)
      {
+
+      // clear this.cotTemp before appending new info
+      this.cotData.Erase(this.cotTemp, TimeCurrent());
+
       for(int s = 0; s < ArraySize(this.cotContent); s += 20)
         {
          if(this.stringToCode(this.cotContent[s + 7]) == cotCode)
@@ -359,7 +367,7 @@ private:
          return CODE_BITCOIN;
         }
 
-      return CODE_USD_INDEX;
+      return CODE_EMPTY;
 
      }
 
@@ -374,14 +382,16 @@ private:
 
    COTData           setSection(const ENUM_COT_CODES cotCode)
      {
+
+      COTData tempy();
+
       if(!this.getSection(cotCode))
         {
-         return COTData();
+         Print(EnumToString(cotCode) + " section not found.");
+         return tempy;
         }
 
-      COTData tempy;
-
-      tempy.code                                   = this.stringToCode(this.cotTemp[7]);
+      tempy.code                                   = cotCode;
       tempy.openInterest                           = this.stringFix<int>(this.cotTemp[7], StringLen(this.cotTemp[7]) - 10, 9);
       tempy.totalChange                            = this.stringFix<int>(this.cotTemp[11], StringLen(this.cotTemp[11]) - 9, 8);
       tempy.totalTrades                            = this.stringFix<int>(this.cotTemp[17], StringLen(this.cotTemp[17]) - 5, 4);
