@@ -8,6 +8,9 @@
 #property description "class to read and parse COT data provided by cftc.gov"
 #include <download.mqh>     // https://github.com/jblanked/MQL-Library/blob/main/Download.mqh
 #include <jb-array.mqh>     // https://github.com/jblanked/MQL-Library/blob/main/JB-Array.mqh
+
+// include COT-Save file as resource in case GET request fails
+#resource "\\Include\\COT-Save.txt" as string COTSaveFile
 //+------------------------------------------------------------------+
 //|        Names and Codes for Financial Markets (COT Charts)        |
 //+------------------------------------------------------------------+
@@ -84,29 +87,17 @@ public:
       if(!this.download("https://www.cftc.gov/dea/futures/financial_lf.htm", "COT.txt") || this.emptyFile())
         {
          Print("Access to https://www.cftc.gov/ was denied. Try again at " + TimeToString(TimeLocal() + 3600));
+         Print("Using save file from COT report of August 20th, 2024");
+         // set cot file as the save file
+         this.cotFile = COTSaveFile;
 
-         // if save file exists
-         if(this.fileExists("COT-Save.txt"))
-           {
-            // duplicate the save file as COT.txt
-            this.fileDuplicate(this.commonFilesFolder() + "COT-Save.txt",  this.commonFilesFolder() + "COT.txt");
-            this.fileClose("COT-Save.txt");
-            this.fileClose("COT.txt");
-
-            // attempt to read file
-            if(!this.fileRead(false, "COT-Save.txt"))
-              {
-               return false;
-              }
-
-            Print("COT data for the week of " + this.getCOTDate() + "saved successfully at " + this.commonFilesFolder() + "COT.txt");
-            this.fileClose("COT-Save.txt");
-            return true;
-           }
-         else // failed to download and save file doesn't exist
+         // read the Save file
+         if(!readFileToArray())
            {
             return false;
            }
+
+         return true;
         }
 
       // attempt to read COT.txt
@@ -115,7 +106,8 @@ public:
          return false;
         }
 
-      this.fileDuplicate(this.commonFilesFolder() + "COT.txt",  this.commonFilesFolder() + "COT-Save.txt");
+      // duplicate file to Include/Cot-Save.txt if not empty
+      this.fileDuplicate(this.commonFilesFolder() + "COT.txt",  TerminalInfoString(TERMINAL_DATA_PATH) + "\\MQL5\\Include\\COT-Save.txt");
       Print("COT data for the week of " + this.getCOTDate() + "saved successfully at " + this.commonFilesFolder() + "COT.txt");
 
       this.fileClose("COT.txt");
