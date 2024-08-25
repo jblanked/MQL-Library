@@ -48,15 +48,15 @@ public:
    //--- max bars
    int               getMaxBars(const string symbol, const ENUM_TIMEFRAMES timeframe, const int userMaximum = 5000)
      {
-      return Bars(symbol,timeframe) > userMaximum ? userMaximum : Bars(symbol,timeframe);
+      return Bars(symbol, timeframe) > userMaximum ? userMaximum : Bars(symbol, timeframe);
      }
 
    //--- direct indcator values
    double            iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, const int maPeriod, const int maShift, const ENUM_MA_METHOD maMethod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
-   double            iMAOnArray(double & array[],const int period, const int maShift, const ENUM_MA_METHOD maMethod, const int shift);
+   double            iMAOnArray(double & array[], const int period, const int maShift, const ENUM_MA_METHOD maMethod, const int shift);
    double            iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, const int rsiPeriod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
    double            iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, const int atrPeriod, const int shift, const bool copyBuffer = true);
-   double            iCustom(const string symbol,const ENUM_TIMEFRAMES timeframe,const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 0, const bool copyBuffer=true);
+   double            iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe, const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 0, const bool copyBuffer = true);
 
 private:
 
@@ -80,14 +80,14 @@ private:
 
       void              setAsSeries(void)
         {
-         ::ArraySetAsSeries(this.data,true);
-         ::ArrayInitialize(this.data,EMPTY_VALUE);
+         ::ArraySetAsSeries(this.data, true);
+         ::ArrayInitialize(this.data, EMPTY_VALUE);
          this.isSetAsSeries = true;
         }
 
       void              resize(const int newSize)
         {
-         ::ArrayResize(this.data,newSize);
+         ::ArrayResize(this.data, newSize);
         }
 
      };
@@ -108,12 +108,12 @@ private:
      };
    void              setAsSeries(void)
      {
-      ::ArraySetAsSeries(this.data,true);
+      ::ArraySetAsSeries(this.data, true);
      }
 
    void              resize(const int newSize)
      {
-      ::ArrayResize(this.data,newSize);
+      ::ArrayResize(this.data, newSize);
      }
 
    void              setHelper(const string nameOfHelper)
@@ -146,12 +146,12 @@ protected:
 double CIndicator:: iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, const int maPeriod, const int maShift, const ENUM_MA_METHOD maMethod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true)
   {
 #ifdef __MQL5__
-   this.helperName ="iMA" + symbol + string(timeframe) + string(maPeriod) + string(maShift) + string(maMethod) + string(appliedPriceOrHandle);
+   this.helperName = "iMA" + symbol + string(timeframe) + string(maPeriod) + string(maShift) + string(maMethod) + string(appliedPriceOrHandle);
    this.setHelper(this.helperName);
 
    if(shift > this.temp.lastSize || !this.temp.isHandleSet)
      {
-      this.temp.resize(shift+3); // resize array
+      this.temp.resize(shift + 3); // resize array
       this.temp.lastSize = shift;
      }
 
@@ -174,7 +174,7 @@ double CIndicator:: iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, co
      {
       ::CopyBuffer(this.temp.handle, 0, 0, shift + 3, this.temp.data);
      }
-   return this.temp.data[shift+2];
+   return this.temp.data[shift + 2];
 #else
    return ::iMA(symbol, timeframe, maPeriod, maShift, maMethod, appliedPriceOrHandle, shift);
 #endif
@@ -183,12 +183,12 @@ double CIndicator:: iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 double CIndicator::iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, const int rsiPeriod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true)
   {
 #ifdef __MQL5__
-   this.helperName ="iRSI" + symbol + string(timeframe) + string(rsiPeriod) + string(appliedPriceOrHandle);
+   this.helperName = "iRSI" + symbol + string(timeframe) + string(rsiPeriod) + string(appliedPriceOrHandle);
    this.setHelper(this.helperName);
 
    if(shift > this.temp.lastSize || !this.temp.isHandleSet)
      {
-      this.temp.resize(shift+4); // resize array
+      this.temp.resize(shift + 4); // resize array
       this.temp.lastSize = shift;
      }
 
@@ -211,21 +211,21 @@ double CIndicator::iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, co
      {
       ::CopyBuffer(this.temp.handle, 0, 0, shift + 3, this.temp.data);
      }
-   return this.temp.data[shift+2];
+   return this.temp.data[shift + 2];
 #else
    return ::iRSI(symbol, timeframe, rsiPeriod, appliedPriceOrHandle, shift);
 #endif
   }
 //+------------------------------------------------------------------+
-double CIndicator::iATR(const string symbol,const ENUM_TIMEFRAMES timeframe,const int atrPeriod, const int shift, const bool copyBuffer = true)
+double CIndicator::iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, const int atrPeriod, const int shift, const bool copyBuffer = true)
   {
 #ifdef __MQL5__
-   this.helperName ="iATR" + symbol + string(timeframe) + string(atrPeriod);
+   this.helperName = "iATR" + symbol + string(timeframe) + string(atrPeriod);
    this.setHelper(this.helperName);
 
    if(shift > this.temp.lastSize || !this.temp.isHandleSet)
      {
-      this.temp.resize(shift+4); // resize array
+      this.temp.resize(shift + 4); // resize array
       this.temp.lastSize = shift;
      }
 
@@ -248,21 +248,21 @@ double CIndicator::iATR(const string symbol,const ENUM_TIMEFRAMES timeframe,cons
      {
       ::CopyBuffer(this.temp.handle, 0, 0, shift + 3, this.temp.data);
      }
-   return this.temp.data[shift+2];
+   return this.temp.data[shift + 2];
 #else
    return ::iATR(symbol, timeframe, atrPeriod, shift);
 #endif
   }
 //+------------------------------------------------------------------+
-double CIndicator::iCustom(const string symbol,const ENUM_TIMEFRAMES timeframe,const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 0, const bool copyBuffer=true)
+double CIndicator::iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe, const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 0, const bool copyBuffer = true)
   {
 #ifdef __MQL5__
-   this.helperName ="iCustom" + indicatorAndFolderNameOnly + symbol + string(timeframe) + string(buffer) + string(shift);
+   this.helperName = "iCustom" + indicatorAndFolderNameOnly + symbol + string(timeframe) + string(buffer) + string(shift);
    this.setHelper(this.helperName);
 
    if(shift > this.temp.lastSize || !this.temp.isHandleSet)
      {
-      this.temp.resize(shift+4);    // resize array
+      this.temp.resize(shift + 4);  // resize array
       this.temp.lastSize = shift;   // set last size
      }
 
@@ -285,13 +285,13 @@ double CIndicator::iCustom(const string symbol,const ENUM_TIMEFRAMES timeframe,c
      {
       ::CopyBuffer(this.temp.handle, buffer, 0, shift + 3, this.temp.data);
      }
-   return this.temp.data[shift+2];
+   return this.temp.data[shift + 2];
 #else
    return ::iCustom(symbol, timeframe,  indicatorAndFolderNameOnly + ".ex4", buffer, shift);
 #endif
   }
 //+------------------------------------------------------------------+
-double CIndicator::iMAOnArray(double &array[],const int period,const int maShift,const ENUM_MA_METHOD maMethod,const int shift)
+double CIndicator::iMAOnArray(double &array[], const int period, const int maShift, const ENUM_MA_METHOD maMethod, const int shift)
   {
 
    double buf[], arr[];
@@ -314,7 +314,7 @@ double CIndicator::iMAOnArray(double &array[],const int period,const int maShift
             return 0;
 
          double sum = 0;
-         int i, pos = total-1;
+         int i, pos = total - 1;
 
          for(i = 1; i < period; i++, pos--)
 
@@ -357,15 +357,15 @@ double CIndicator::iMAOnArray(double &array[],const int period,const int maShift
 
             if(posti == total - 2)
 
-               buf[posti+1] = array[posti+1];
+               buf[posti + 1] = array[posti + 1];
 
-            buf[posti] = array[posti] * pr + buf[posti+1] * (1-pr);
+            buf[posti] = array[posti] * pr + buf[posti + 1] * (1 - pr);
 
             posti--;
 
            }
 
-         return buf[shift+maShift];
+         return buf[shift + maShift];
 
         }
 
@@ -405,15 +405,15 @@ double CIndicator::iMAOnArray(double &array[],const int period,const int maShift
 
             else
 
-               summ = buf[poss+1] * (period-1) + array[poss];
+               summ = buf[poss + 1] * (period - 1) + array[poss];
 
-            buf[poss]=summ/period;
+            buf[poss] = summ / period;
 
             poss--;
 
            }
 
-         return buf[shift+maShift];
+         return buf[shift + maShift];
 
         }
 
@@ -430,7 +430,7 @@ double CIndicator::iMAOnArray(double &array[],const int period,const int maShift
 
          double price;
 
-         int m, weight = 0, posit = total-1;
+         int m, weight = 0, posit = total - 1;
 
 
 
@@ -474,7 +474,7 @@ double CIndicator::iMAOnArray(double &array[],const int period,const int maShift
 
            }
 
-         return buf[shift+maShift];
+         return buf[shift + maShift];
 
         }
 
@@ -485,62 +485,62 @@ double CIndicator::iMAOnArray(double &array[],const int period,const int maShift
   }
 //+------------------------------------------------------------------+
 #ifdef __MQL5__
-bool CIndicator::createBuffer(const string name,const ENUM_DRAW_TYPE drawType,const ENUM_LINE_STYLE style,const color color_,const int width,const int index,double &dataArray[],const bool showData=true,const ENUM_INDEXBUFFER_TYPE bufferType=0,const int arrowCode=233)
+bool CIndicator::createBuffer(const string name, const ENUM_DRAW_TYPE drawType, const ENUM_LINE_STYLE style, const color color_, const int width, const int index, double &dataArray[], const bool showData = true, const ENUM_INDEXBUFFER_TYPE bufferType = 0, const int arrowCode = 233)
 #else
-bool CIndicator::createBuffer(const string name,const int drawType,const ENUM_LINE_STYLE style,const color color_,const int width,const int index,double &dataArray[],const bool showData=true,const ENUM_INDEXBUFFER_TYPE bufferType=0,const int arrowCode=233)
+bool CIndicator::createBuffer(const string name, const int drawType, const ENUM_LINE_STYLE style, const color color_, const int width, const int index, double &dataArray[], const bool showData = true, const ENUM_INDEXBUFFER_TYPE bufferType = 0, const int arrowCode = 233)
 #endif
   {
-   if(!::SetIndexBuffer(index,dataArray,bufferType))
+   if(!::SetIndexBuffer(index, dataArray, bufferType))
      {
       ::Print("Failed to set buffer for " + name + " at index " + (string)index);
       return false;
      }
 
 #ifdef __MQL5__
-   if(!::PlotIndexSetString(index,PLOT_LABEL,name))
+   if(!::PlotIndexSetString(index, PLOT_LABEL, name))
      {
       ::Print("Failed to set label for " + name + " at index " + (string)index);
       return false;
      }
-   if(!::PlotIndexSetInteger(index,PLOT_DRAW_TYPE,drawType))
+   if(!::PlotIndexSetInteger(index, PLOT_DRAW_TYPE, drawType))
      {
       ::Print("Failed to set draw type for " + name + " at index " + (string)index);
       return false;
      }
-   if(!::PlotIndexSetInteger(index,PLOT_LINE_STYLE,style))
+   if(!::PlotIndexSetInteger(index, PLOT_LINE_STYLE, style))
      {
       ::Print("Failed to set draw style for " + name + " at index " + (string)index);
       return false;
      }
 
-   if(!::PlotIndexSetInteger(index,PLOT_LINE_COLOR,color_))
+   if(!::PlotIndexSetInteger(index, PLOT_LINE_COLOR, color_))
      {
       ::Print("Failed to set color for " + name + " at index " + (string)index);
       return false;
      }
 
-   if(!::PlotIndexSetInteger(index,PLOT_LINE_WIDTH,width))
+   if(!::PlotIndexSetInteger(index, PLOT_LINE_WIDTH, width))
      {
       ::Print("Failed to set width for " + name + " at index " + (string)index);
       return false;
      }
 
-   if(!::PlotIndexSetInteger(index,PLOT_ARROW,arrowCode))
+   if(!::PlotIndexSetInteger(index, PLOT_ARROW, arrowCode))
      {
       ::Print("Failed to set arrow code for " + name + " at index " + (string)index);
       return false;
      }
 
-   if(!PlotIndexSetInteger(index,PLOT_SHOW_DATA,showData))
+   if(!PlotIndexSetInteger(index, PLOT_SHOW_DATA, showData))
      {
       ::Print("Failed to set data display for " + name + " at index " + (string)index);
       return false;
      }
 
 #else
-   ::SetIndexStyle(index,DRAW_LINE,style,width,color_);
-   ::SetIndexLabel(index,name);
-   ::SetIndexArrow(index,arrowCode);
+   ::SetIndexStyle(index, drawType, style, width, color_);
+   ::SetIndexLabel(index, name);
+   ::SetIndexArrow(index, arrowCode);
 #endif
 
 
