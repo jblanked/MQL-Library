@@ -189,7 +189,7 @@ private:
       const string tempFile = FileReadString(this.fileHandle(false, cotFileName));
       this.fileClose(cotFileName);
 
-      if(tempFile == NULL)
+      if(tempFile == "")
         {
          Print(this.commonFilesFolder() + cotFileName + " is empty.");
          return false;
