@@ -23,7 +23,6 @@ public:
    CIndicator::     ~CIndicator(void)
      {
 
-
      };
 
    //--- create indicator buffers with draw attributes
@@ -51,13 +50,56 @@ public:
       return Bars(symbol, timeframe) > userMaximum ? userMaximum : Bars(symbol, timeframe);
      }
 
-   //--- direct indcator values
+   //--- direct indicator values
    double            iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, const int maPeriod, const int maShift, const ENUM_MA_METHOD maMethod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
    double            iMAOnArray(double & array[], const int period, const int maShift, const ENUM_MA_METHOD maMethod, const int shift);
    double            iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, const int rsiPeriod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
    double            iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, const int atrPeriod, const int shift, const bool copyBuffer = true);
+   double            iADX(const string symbol, const ENUM_TIMEFRAMES timeframe, const int adxPeriod, ENUM_APPLIED_PRICE appliedPrice, int adxMode = 0, const int shift = 0, const bool copyBuffer = true);
    double            iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe, const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 0, const bool copyBuffer = true);
 
+   string            uninitReasonText(int reasonCode)
+     {
+      string text = "";
+      //---
+      switch(reasonCode)
+        {
+         case REASON_ACCOUNT:
+            text = "Account was changed.";
+            break;
+         case REASON_CHARTCHANGE:
+            text = "Symbol or timeframe was changed.";
+            break;
+         case REASON_CHARTCLOSE:
+            text = "Chart was closed.";
+            break;
+         case REASON_PARAMETERS:
+            text = "Input-parameter was changed.";
+            break;
+         case REASON_RECOMPILE:
+            text = "Program was recompiled.";
+            break;
+         case REASON_REMOVE:
+            text = "Program was removed from chart.";
+            break;
+         case REASON_TEMPLATE:
+            text = "New template was applied to chart.";
+            break;
+         case REASON_INITFAILED:
+            text = "Failed to initialize.";
+            break;
+         case REASON_PROGRAM:
+            text = "Removed by a script, indicator, or expert advisor.";
+            break;
+         case REASON_CLOSE:
+            text = "Terminal was closed.";
+            break;
+         default:
+            text = "Another reason.";
+        }
+      //---
+      return text;
+     }
 private:
 
    //--- Helper class
@@ -66,7 +108,7 @@ private:
    public:
       string         name;
       int            handle;
-      double         data[];
+      double         value[];
       int            lastSize;
       bool           isHandleSet;
       bool           isSetAsSeries;
@@ -80,14 +122,14 @@ private:
 
       void              setAsSeries(void)
         {
-         ::ArraySetAsSeries(this.data, true);
-         ::ArrayInitialize(this.data, EMPTY_VALUE);
+         ::ArraySetAsSeries(this.value, true);
+         ::ArrayInitialize(this.value, EMPTY_VALUE);
          this.isSetAsSeries = true;
         }
 
       void              resize(const int newSize)
         {
-         ::ArrayResize(this.data, newSize);
+         ::ArrayResize(this.value, newSize);
         }
 
      };
@@ -103,7 +145,6 @@ private:
             return true;
            }
         }
-
       return false;
      };
    void              setAsSeries(void)
@@ -172,9 +213,9 @@ double CIndicator:: iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 
    if(copyBuffer)
      {
-      ::CopyBuffer(this.temp.handle, 0, 0, shift + 3, this.temp.data);
+      ::CopyBuffer(this.temp.handle, 0, 0, shift + 3, this.temp.value);
      }
-   return this.temp.data[shift + 2];
+   return this.temp.value[shift + 2];
 #else
    return ::iMA(symbol, timeframe, maPeriod, maShift, maMethod, appliedPriceOrHandle, shift);
 #endif
@@ -209,9 +250,9 @@ double CIndicator::iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 
    if(copyBuffer)
      {
-      ::CopyBuffer(this.temp.handle, 0, 0, shift + 3, this.temp.data);
+      ::CopyBuffer(this.temp.handle, 0, 0, shift + 3, this.temp.value);
      }
-   return this.temp.data[shift + 2];
+   return this.temp.value[shift + 2];
 #else
    return ::iRSI(symbol, timeframe, rsiPeriod, appliedPriceOrHandle, shift);
 #endif
@@ -246,11 +287,50 @@ double CIndicator::iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 
    if(copyBuffer)
      {
-      ::CopyBuffer(this.temp.handle, 0, 0, shift + 3, this.temp.data);
+      ::CopyBuffer(this.temp.handle, 0, 0, shift + 3, this.temp.value);
      }
-   return this.temp.data[shift + 2];
+   return this.temp.value[shift + 2];
 #else
    return ::iATR(symbol, timeframe, atrPeriod, shift);
+#endif
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+double CIndicator::iADX(const string symbol, const ENUM_TIMEFRAMES timeframe, const int adxPeriod, ENUM_APPLIED_PRICE appliedPrice, int adxMode = 0, const int shift = 0, const bool copyBuffer = true)
+  {
+#ifdef __MQL5__
+   this.helperName = "iADX" + symbol + string(timeframe) + string(adxPeriod);
+   this.setHelper(this.helperName);
+
+   if(shift > this.temp.lastSize || !this.temp.isHandleSet)
+     {
+      this.temp.resize(shift + 4); // resize array
+      this.temp.lastSize = shift;
+     }
+
+//--- set handle
+   if(!this.temp.isHandleSet)
+     {
+      this.temp.handle = ::iADX(symbol, timeframe, adxPeriod);
+
+      if(this.temp.handle == EMPTY_VALUE)
+        {
+         ::Print("Failed to set ADX.");
+
+         return EMPTY_VALUE;
+        }
+
+      this.temp.isHandleSet = true;
+     }
+
+   if(copyBuffer)
+     {
+      ::CopyBuffer(this.temp.handle, adxMode, 0, shift + 3, this.temp.value);
+     }
+   return this.temp.value[shift + 2];
+#else
+   return ::iADX(symbol, timeframe, adxPeriod, appliedPrice, adxMode, shift);
 #endif
   }
 //+------------------------------------------------------------------+
@@ -283,9 +363,9 @@ double CIndicator::iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe,
 
    if(copyBuffer)
      {
-      ::CopyBuffer(this.temp.handle, buffer, 0, shift + 3, this.temp.data);
+      ::CopyBuffer(this.temp.handle, buffer, 0, shift + 3, this.temp.value);
      }
-   return this.temp.data[shift + 2];
+   return this.temp.value[shift + 2];
 #else
    return ::iCustom(symbol, timeframe,  indicatorAndFolderNameOnly + ".ex4", buffer, shift);
 #endif
@@ -485,9 +565,9 @@ double CIndicator::iMAOnArray(double &array[], const int period, const int maShi
   }
 //+------------------------------------------------------------------+
 #ifdef __MQL5__
-bool CIndicator::createBuffer(const string name, const ENUM_DRAW_TYPE drawType, const ENUM_LINE_STYLE style, const color color_, const int width, const int index, double &dataArray[], const bool showData = true, const ENUM_INDEXBUFFER_TYPE bufferType = 0, const int arrowCode = 233)
+bool CIndicator::createBuffer(const string name, const ENUM_DRAW_TYPE drawType, const ENUM_LINE_STYLE style, const color color_, const int width, const int index, double &dataArray[], const bool showData = true, const ENUM_INDEXBUFFER_TYPE bufferType = INDICATOR_DATA, const int arrowCode = 233)
 #else
-bool CIndicator::createBuffer(const string name, const int drawType, const ENUM_LINE_STYLE style, const color color_, const int width, const int index, double &dataArray[], const bool showData = true, const ENUM_INDEXBUFFER_TYPE bufferType = 0, const int arrowCode = 233)
+bool CIndicator::createBuffer(const string name, const int drawType, const ENUM_LINE_STYLE style, const color color_, const int width, const int index, double &dataArray[], const bool showData = true, const ENUM_INDEXBUFFER_TYPE bufferType = INDICATOR_DATA, const int arrowCode = 233)
 #endif
   {
    if(!::SetIndexBuffer(index, dataArray, bufferType))
@@ -542,10 +622,6 @@ bool CIndicator::createBuffer(const string name, const int drawType, const ENUM_
    ::SetIndexLabel(index, name);
    ::SetIndexArrow(index, arrowCode);
 #endif
-
-
-//::ArraySetAsSeries(dataArray,true);
-//::ArrayInitialize(dataArray,EMPTY_VALUE);
 
    return true;
   }
