@@ -6,7 +6,6 @@
 #property copyright "Copyright 2024,JBlanked"
 #property link      "https://www.jblanked.com/"
 #include <jb-array.mqh> // download from https://github.com/jblanked/MQL-Library/blob/main/JB-Array.mqh
-
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -135,17 +134,17 @@ private:
      };
 
    //--- get indicator data
-   bool              getHelper(const string name, CIndicatorHelper & tempVar)
+   int               getHelper(const string name, CIndicatorHelper & tempVar)
      {
       for(int i = 0; i < this.Count(this.data); i++)
         {
          if(data[i].name == name)
            {
             tempVar = data[i];
-            return true;
+            return i;
            }
         }
-      return false;
+      return -1;
      };
    void              setAsSeries(void)
      {
@@ -159,7 +158,8 @@ private:
 
    void              setHelper(const string nameOfHelper)
      {
-      if(!this.getHelper(nameOfHelper, temp))
+      this.helperIndex = this.getHelper(nameOfHelper, this.temp);
+      if(helperIndex == -1)
         {
          // set
          const int nSize = this.Count(this.data);
@@ -170,16 +170,16 @@ private:
          this.data[nSize].setAsSeries();
 
          this.temp = this.data[nSize];
+         ArraySetAsSeries(this.temp.value, true);
+         this.helperIndex = nSize;
         }
      }
 
-
+   int               helperIndex;
    CIndicatorHelper  temp;
 
 protected:
    CIndicatorHelper  data[];
-
-
    string            helperName;
 
   };
@@ -207,15 +207,14 @@ double CIndicator:: iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 
          return EMPTY_VALUE;
         }
-
       this.temp.isHandleSet = true;
      }
-
    if(copyBuffer)
      {
-      ::CopyBuffer(this.temp.handle, 0, 0, shift + 3, this.temp.value);
+      ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
      }
-   return this.temp.value[shift + 2];
+   this.data[this.helperIndex] = this.temp;
+   return this.temp.value[shift];
 #else
    return ::iMA(symbol, timeframe, maPeriod, maShift, maMethod, appliedPriceOrHandle, shift);
 #endif
@@ -229,7 +228,7 @@ double CIndicator::iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 
    if(shift > this.temp.lastSize || !this.temp.isHandleSet)
      {
-      this.temp.resize(shift + 4); // resize array
+      this.temp.resize(shift + 3); // resize array
       this.temp.lastSize = shift;
      }
 
@@ -241,7 +240,6 @@ double CIndicator::iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, co
       if(this.temp.handle == EMPTY_VALUE)
         {
          ::Print("Failed to set RSI");
-
          return EMPTY_VALUE;
         }
 
@@ -250,9 +248,10 @@ double CIndicator::iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 
    if(copyBuffer)
      {
-      ::CopyBuffer(this.temp.handle, 0, 0, shift + 3, this.temp.value);
+      ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
      }
-   return this.temp.value[shift + 2];
+   this.data[this.helperIndex] = this.temp;
+   return this.temp.value[shift];
 #else
    return ::iRSI(symbol, timeframe, rsiPeriod, appliedPriceOrHandle, shift);
 #endif
@@ -266,7 +265,7 @@ double CIndicator::iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 
    if(shift > this.temp.lastSize || !this.temp.isHandleSet)
      {
-      this.temp.resize(shift + 4); // resize array
+      this.temp.resize(shift + 3); // resize array
       this.temp.lastSize = shift;
      }
 
@@ -278,7 +277,6 @@ double CIndicator::iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, co
       if(this.temp.handle == EMPTY_VALUE)
         {
          ::Print("Failed to set ATR");
-
          return EMPTY_VALUE;
         }
 
@@ -287,9 +285,10 @@ double CIndicator::iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 
    if(copyBuffer)
      {
-      ::CopyBuffer(this.temp.handle, 0, 0, shift + 3, this.temp.value);
+      ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
      }
-   return this.temp.value[shift + 2];
+   this.data[this.helperIndex] = this.temp;
+   return this.temp.value[shift];
 #else
    return ::iATR(symbol, timeframe, atrPeriod, shift);
 #endif
@@ -305,7 +304,7 @@ double CIndicator::iADX(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 
    if(shift > this.temp.lastSize || !this.temp.isHandleSet)
      {
-      this.temp.resize(shift + 4); // resize array
+      this.temp.resize(shift + 3); // resize array
       this.temp.lastSize = shift;
      }
 
@@ -326,9 +325,10 @@ double CIndicator::iADX(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 
    if(copyBuffer)
      {
-      ::CopyBuffer(this.temp.handle, adxMode, 0, shift + 3, this.temp.value);
+      ::CopyBuffer(this.temp.handle, adxMode, 0, shift + 1, this.temp.value);
      }
-   return this.temp.value[shift + 2];
+   this.data[this.helperIndex] = this.temp;
+   return this.temp.value[shift];
 #else
    return ::iADX(symbol, timeframe, adxPeriod, appliedPrice, adxMode, shift);
 #endif
@@ -342,7 +342,7 @@ double CIndicator::iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe,
 
    if(shift > this.temp.lastSize || !this.temp.isHandleSet)
      {
-      this.temp.resize(shift + 4);  // resize array
+      this.temp.resize(shift + 3);  // resize array
       this.temp.lastSize = shift;   // set last size
      }
 
@@ -363,9 +363,10 @@ double CIndicator::iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe,
 
    if(copyBuffer)
      {
-      ::CopyBuffer(this.temp.handle, buffer, 0, shift + 3, this.temp.value);
+      ::CopyBuffer(this.temp.handle, buffer, 0, shift + 1, this.temp.value);
      }
-   return this.temp.value[shift + 2];
+   this.data[this.helperIndex] = this.temp;
+   return this.temp.value[shift];
 #else
    return ::iCustom(symbol, timeframe,  indicatorAndFolderNameOnly + ".ex4", buffer, shift);
 #endif
