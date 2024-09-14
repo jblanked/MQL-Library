@@ -31,6 +31,15 @@ public:
    bool              createBuffer(const string name, const int drawType, const ENUM_LINE_STYLE style, const color color_, const int width, const int index, double & dataArray[], const bool showData = true, const ENUM_INDEXBUFFER_TYPE bufferType = INDICATOR_DATA, const int arrowCode = 233);
 #endif
 
+   //--- direct indicator values
+   double            iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, const int maPeriod, const int maShift, const ENUM_MA_METHOD maMethod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
+   double            iMAOnArray(double & array[], const int period, const int maShift, const ENUM_MA_METHOD maMethod, const int shift);
+   double            iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, const int rsiPeriod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
+   double            iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, const int atrPeriod, const int shift, const bool copyBuffer = true);
+   double            iADX(const string symbol, const ENUM_TIMEFRAMES timeframe, const int adxPeriod, ENUM_APPLIED_PRICE appliedPrice, int adxMode = 0, const int shift = 0, const bool copyBuffer = true);
+   double            iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe, const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 1, const bool copyBuffer = true);
+   double            iEnvelopes(const string symbol, const ENUM_TIMEFRAMES timeframe, const int envPeriod, const int maShift,  const ENUM_MA_METHOD envMethod, const int appliedPriceOrHandle, const double envDeviation, const int envMode = 0, const int shift = 1, const bool copyBuffer = true);
+
    //--- delete pointer safely
    bool              deletePointer(void *ptr)
      {
@@ -48,14 +57,6 @@ public:
      {
       return Bars(symbol, timeframe) > userMaximum ? userMaximum : Bars(symbol, timeframe);
      }
-
-   //--- direct indicator values
-   double            iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, const int maPeriod, const int maShift, const ENUM_MA_METHOD maMethod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
-   double            iMAOnArray(double & array[], const int period, const int maShift, const ENUM_MA_METHOD maMethod, const int shift);
-   double            iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, const int rsiPeriod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
-   double            iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, const int atrPeriod, const int shift, const bool copyBuffer = true);
-   double            iADX(const string symbol, const ENUM_TIMEFRAMES timeframe, const int adxPeriod, ENUM_APPLIED_PRICE appliedPrice, int adxMode = 0, const int shift = 0, const bool copyBuffer = true);
-   double            iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe, const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 0, const bool copyBuffer = true);
 
    string            uninitReasonText(int reasonCode)
      {
@@ -100,6 +101,32 @@ public:
       return text;
      }
 private:
+
+   class CJBRates
+     {
+   public:
+                     CJBRates(const bool setAsSeries = true)
+        {
+         this.setAsSeries(setAsSeries);
+        }
+
+      MqlRates            operator[](const int shift)
+        {
+         CopyRates(_Symbol, PERIOD_CURRENT, shift, 1, this.m_rates);
+         return this.m_rates[0];
+        }
+
+      void              setAsSeries(const bool status = true)
+        {
+         if(ArraySetAsSeries(this.m_rates, status))
+           {
+            this.isSetAsSeries = true;
+           }
+        }
+   private:
+      bool              isSetAsSeries;
+      MqlRates          m_rates[];
+     };
 
    //--- Helper class
    class CIndicatorHelper
@@ -177,11 +204,11 @@ private:
 
    int               helperIndex;
    CIndicatorHelper  temp;
-
+public:
+   CJBRates          rates;
 protected:
    CIndicatorHelper  data[];
    string            helperName;
-
   };
 //+------------------------------------------------------------------+
 double CIndicator:: iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, const int maPeriod, const int maShift, const ENUM_MA_METHOD maMethod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true)
@@ -334,7 +361,7 @@ double CIndicator::iADX(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 #endif
   }
 //+------------------------------------------------------------------+
-double CIndicator::iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe, const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 0, const bool copyBuffer = true)
+double CIndicator::iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe, const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 1, const bool copyBuffer = true)
   {
 #ifdef __MQL5__
    this.helperName = "iCustom" + indicatorAndFolderNameOnly + symbol + string(timeframe) + string(buffer) + string(shift);
@@ -369,6 +396,44 @@ double CIndicator::iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe,
    return this.temp.value[shift];
 #else
    return ::iCustom(symbol, timeframe,  indicatorAndFolderNameOnly + ".ex4", buffer, shift);
+#endif
+  }
+//+------------------------------------------------------------------+
+double CIndicator::iEnvelopes(const string symbol, const ENUM_TIMEFRAMES timeframe, const int envPeriod, const int maShift, const ENUM_MA_METHOD envMethod, const int appliedPriceOrHandle, const double envDeviation, const int envMode = 0, const int shift = 1, const bool copyBuffer = true)
+  {
+#ifdef __MQL5__
+   this.helperName = "iEnvelopes" + symbol + string(timeframe) + string(envPeriod) + string(envMethod) + string(appliedPriceOrHandle);
+   this.setHelper(this.helperName);
+
+   if(shift > this.temp.lastSize || !this.temp.isHandleSet)
+     {
+      this.temp.resize(shift + 3); // resize array
+      this.temp.lastSize = shift;
+     }
+
+//--- set handle
+   if(!this.temp.isHandleSet)
+     {
+      this.temp.handle = ::iEnvelopes(symbol, timeframe, envPeriod, maShift, envMethod, appliedPriceOrHandle, envDeviation);
+
+      if(this.temp.handle == EMPTY_VALUE)
+        {
+         ::Print("Failed to set Envelopes.");
+
+         return EMPTY_VALUE;
+        }
+
+      this.temp.isHandleSet = true;
+     }
+
+   if(copyBuffer)
+     {
+      ::CopyBuffer(this.temp.handle, envMode, 0, shift + 1, this.temp.value);
+     }
+   this.data[this.helperIndex] = this.temp;
+   return this.temp.value[shift];
+#else
+   return ::iEnvelopes(symbol, timeframe, envPeriod, maShift, envMethod, appliedPriceOrHandle, envDeviation, envMode, shift);
 #endif
   }
 //+------------------------------------------------------------------+
@@ -626,4 +691,8 @@ bool CIndicator::createBuffer(const string name, const int drawType, const ENUM_
 
    return true;
   }
+//+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
+#define JB_ASK SymbolInfoDouble(_Symbol, SYMBOL_ASK)
+#define JB_BID SymbolInfoDouble(_Symbol, SYMBOL_BID)
 //+------------------------------------------------------------------+
