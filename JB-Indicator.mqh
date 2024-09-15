@@ -39,6 +39,31 @@ public:
    double            iADX(const string symbol, const ENUM_TIMEFRAMES timeframe, const int adxPeriod, ENUM_APPLIED_PRICE appliedPrice, int adxMode = 0, const int shift = 0, const bool copyBuffer = true);
    double            iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe, const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 1, const bool copyBuffer = true);
    double            iEnvelopes(const string symbol, const ENUM_TIMEFRAMES timeframe, const int envPeriod, const int maShift,  const ENUM_MA_METHOD envMethod, const int appliedPriceOrHandle, const double envDeviation, const int envMode = 0, const int shift = 1, const bool copyBuffer = true);
+   double            iADR(const string symbol, const int period, const int shift)
+     {
+      double val = 0;
+      double sum1 = 0;
+      for(int i = shift; i <= shift + period; i++)
+         sum1 += (iHigh(symbol, PERIOD_D1, i) - iLow(symbol, PERIOD_D1, i));
+
+      val = sum1 / period;
+      return(val);
+     }
+
+   double            iVWAP(const string symbol, const ENUM_TIMEFRAMES timeframe, const int period, const int shift)
+     {
+      double val = 0;
+      double sum1 = 0, sum2 = 0;
+      for(int i = shift; i <= shift + period; i++)
+        {
+         sum1 += iClose(symbol, timeframe, i) * iVolume(symbol, timeframe, i);
+         sum2 += (double)iVolume(symbol, timeframe, i);
+        }
+      if(sum2 > 0)
+         val = sum1 / sum2;
+      return(val);
+     }
+
 
    //--- delete pointer safely
    bool              deletePointer(void *ptr)
