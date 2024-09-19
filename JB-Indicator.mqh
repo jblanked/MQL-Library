@@ -68,7 +68,7 @@ public:
    //+------------------------------------------------------------------+
    //| Positive Volume Index (PVI)                                      |
    //+------------------------------------------------------------------+
-   double            iPVI(string symbol, ENUM_TIMEFRAMES timeframe, ENUM_APPLIED_VOLUME volumeType, int shift)
+   double            iPVI(const string symbol, const ENUM_TIMEFRAMES timeframe, const ENUM_APPLIED_VOLUME volumeType, const int shift)
      {
       static double lastValue = 1.0;  // Initialize lastValue to 1.0, if not already set
 
@@ -95,6 +95,43 @@ public:
       if(Vol0 > Vol1)
         {
          lastValue = lastValue * (1 + ((mqlRates[0].close - mqlRates[1].close) / mqlRates[1].close));
+        }
+
+      // Return the updated PVI value
+      return lastValue;
+     }
+   double            iPVI(const string symbol, const ENUM_TIMEFRAMES timeframe, const ENUM_APPLIED_VOLUME volumeType, const double & closeData[], const int shift)
+     {
+      static double lastValue = 1.0;  // Initialize lastValue to 1.0, if not already set
+
+      MqlRates mqlRates[];
+      ArraySetAsSeries(mqlRates, true);  // Ensure array is set as series
+      ArraySetAsSeries(closeData, true);    // Ensure array is set as series
+      long Vol0, Vol1;
+      if(CopyRates(symbol, timeframe, shift, 2, mqlRates) < 2)  // Fetch the last 2 bars
+        {
+         return lastValue;
+        }
+      if(ArraySize(closeData) <= (shift + 1))
+        {
+         return lastValue;
+        }
+      // Fetch volumes based on volume type (tick or real)
+      if(volumeType == VOLUME_TICK)
+        {
+         Vol0 = mqlRates[0].tick_volume;
+         Vol1 = mqlRates[1].tick_volume;
+        }
+      else
+        {
+         Vol0 = mqlRates[0].real_volume;
+         Vol1 = mqlRates[1].real_volume;
+        }
+
+      // Calculate the new PVI value based on input data
+      if(Vol0 > Vol1)
+        {
+         lastValue = lastValue * (1 + ((closeData[shift] - closeData[shift + 1]) / closeData[shift + 1]));
         }
 
       // Return the updated PVI value
