@@ -6,6 +6,7 @@
 #property copyright "Copyright 2024,JBlanked"
 #property link      "https://www.jblanked.com/"
 #include <jb-array.mqh> // download from https://github.com/jblanked/MQL-Library/blob/main/JB-Array.mqh
+#ifdef __MQL4__ enum ENUM_APPLIED_VOLUME { VOLUME_TICK, VOLUME_REAL }; #endif
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -63,6 +64,42 @@ public:
          val = sum1 / sum2;
       return(val);
      }
+
+   //+------------------------------------------------------------------+
+   //| Positive Volume Index (PVI)                                      |
+   //+------------------------------------------------------------------+
+   double            iPVI(ENUM_APPLIED_VOLUME volumeType, int shift)
+     {
+      static double lastValue = 1.0;  // Initialize lastValue to 1.0, if not already set
+
+      long Vol0, Vol1;
+      MqlRates mqlRates[];
+      ArraySetAsSeries(mqlRates, true);  // Ensure array is set as series
+      CopyRates(_Symbol, PERIOD_CURRENT, shift, 2, mqlRates);  // Fetch the last 2 bars
+
+      // Fetch volumes based on volume type (tick or real)
+      if(volumeType == VOLUME_TICK)
+        {
+         Vol0 = mqlRates[0].tick_volume;
+         Vol1 = mqlRates[1].tick_volume;
+        }
+      else
+        {
+         Vol0 = mqlRates[0].real_volume;
+         Vol1 = mqlRates[1].real_volume;
+        }
+
+      // Calculate the new PVI value
+      if(Vol0 > Vol1)
+        {
+         lastValue = lastValue * (1 + ((mqlRates[0].close - mqlRates[1].close) / mqlRates[1].close));
+        }
+
+      // Return the updated PVI value
+      return lastValue;
+     }
+   //+------------------------------------------------------------------+
+
 
 
    //--- delete pointer safely
