@@ -240,35 +240,15 @@ double            CMovingAverage::iMA(string symbol, ENUM_TIMEFRAMES timeframe, 
    switch(maMethod)
      {
       case ENUM_MODE_SMA:
-         // if maMethod is not SMA, rates should not be set as series
-         if(!ArrayIsSeries(data))
-           {
-            Print("Array should be set as series");
-           }
          return SimpleMA(period + shift - 1, period, data);
          break;
       case ENUM_MODE_LWMA:
-         // if maMethod is not SMA, rates should not be set as series
-         if(ArrayIsSeries(data))
-           {
-            Print("Array should not be set as series");
-           }
          return LinearWeightedMA(ArraySize(data) - (shift + 1), period, data);
          break;
       case ENUM_MODE_EMA:
-         // if maMethod is not SMA, rates should not be set as series
-         if(ArrayIsSeries(data))
-           {
-            Print("Array should not be set as series");
-           }
          return CalculateEMA(period, shift, data);
          break;
       case ENUM_MODE_SMMA:
-         // if maMethod is not SMA, rates should not be set as series
-         if(ArrayIsSeries(data))
-           {
-            Print("Array should not be set as series");
-           }
          return SmoothedMA(period, shift, data);
          break;
       default:
@@ -326,7 +306,7 @@ double            CMovingAverage::iMA(string symbol, ENUM_TIMEFRAMES timeframe, 
    if(shift < 0 || shift >= ArraySize(valArray))
      {
       Print("Invalid shift value.");
-      return 0.0; 
+      return 0.0;
      }
 
    switch(maMethod)
