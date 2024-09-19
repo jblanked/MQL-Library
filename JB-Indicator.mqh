@@ -75,8 +75,10 @@ public:
       long Vol0, Vol1;
       MqlRates mqlRates[];
       ArraySetAsSeries(mqlRates, true);  // Ensure array is set as series
-      CopyRates(symbol, timeframe, shift, 2, mqlRates);  // Fetch the last 2 bars
-
+      if(CopyRates(symbol, timeframe, shift, 2, mqlRates) < 2)  // Fetch the last 2 bars
+        {
+         return lastValue;
+        }
       // Fetch volumes based on volume type (tick or real)
       if(volumeType == VOLUME_TICK)
         {
