@@ -5,6 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2024,JBlanked"
 #property link      "https://www.jblanked.com/"
+#property strict
 #include <jb-array.mqh> // download from https://github.com/jblanked/MQL-Library/blob/main/JB-Array.mqh
 #ifdef __MQL4__ enum ENUM_APPLIED_VOLUME { VOLUME_TICK, VOLUME_REAL }; #endif
 //+------------------------------------------------------------------+
@@ -139,6 +140,48 @@ public:
      }
    //+------------------------------------------------------------------+
 
+   double            iRSIOnArray(double &array[], int period, int shift, int total = 0)
+     {
+      if(total == 0)
+         total = ArraySize(array);
+      int stop = total - shift;
+      if(period <= 1 || shift < 0 || stop <= period)
+         return 0;
+      bool isSeries = ArrayGetAsSeries(array);
+      if(isSeries)
+         ArraySetAsSeries(array, false);
+      int i;
+      double SumP = 0;
+      double SumN = 0;
+      for(i = 1; i <= period; i++)
+        {
+         double diff = array[i] - array[i - 1];
+         if(diff > 0)
+            SumP += diff;
+         else
+            SumN += -diff;
+        }
+      double AvgP = SumP / period;
+      double AvgN = SumN / period;
+      for(; i < stop; i++)
+        {
+         double diff = array[i] - array[i - 1];
+         AvgP = (AvgP * (period - 1) + (diff > 0 ? diff : 0)) / period;
+         AvgN = (AvgN * (period - 1) + (diff < 0 ? -diff : 0)) / period;
+        }
+      double rsi;
+      if(AvgN == 0.0)
+        {
+         rsi = (AvgP == 0.0 ? 50.0 : 100.0);
+        }
+      else
+        {
+         rsi = 100.0 - (100.0 / (1.0 + AvgP / AvgN));
+        }
+      if(isSeries)
+         ArraySetAsSeries(array, true);
+      return rsi;
+     }
 
 
    //--- delete pointer safely
