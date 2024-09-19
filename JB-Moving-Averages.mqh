@@ -231,7 +231,7 @@ double            CMovingAverage::iMA(string symbol, ENUM_TIMEFRAMES timeframe, 
   {
 
 // Ensure the shift is within bounds
-   if(shift < 0 || shift >= ArraySize(valArray))
+   if(shift < 0 || shift >= ArraySize(data))
      {
       Print("Invalid shift value.");
       return 0.0;
@@ -245,7 +245,7 @@ double            CMovingAverage::iMA(string symbol, ENUM_TIMEFRAMES timeframe, 
            {
             Print("Array should be set as series");
            }
-         return SimpleMA(period + shift - 1, period, valArray);
+         return SimpleMA(period + shift - 1, period, data);
          break;
       case ENUM_MODE_LWMA:
          // if maMethod is not SMA, rates should not be set as series
@@ -253,7 +253,7 @@ double            CMovingAverage::iMA(string symbol, ENUM_TIMEFRAMES timeframe, 
            {
             Print("Array should not be set as series");
            }
-         return LinearWeightedMA(ArraySize(valArray) - (shift + 1), period, valArray);
+         return LinearWeightedMA(ArraySize(data) - (shift + 1), period, data);
          break;
       case ENUM_MODE_EMA:
          // if maMethod is not SMA, rates should not be set as series
@@ -261,7 +261,7 @@ double            CMovingAverage::iMA(string symbol, ENUM_TIMEFRAMES timeframe, 
            {
             Print("Array should not be set as series");
            }
-         return CalculateEMA(period, shift, valArray);
+         return CalculateEMA(period, shift, data);
          break;
       case ENUM_MODE_SMMA:
          // if maMethod is not SMA, rates should not be set as series
@@ -269,7 +269,7 @@ double            CMovingAverage::iMA(string symbol, ENUM_TIMEFRAMES timeframe, 
            {
             Print("Array should not be set as series");
            }
-         return SmoothedMA(period, shift, valArray);
+         return SmoothedMA(period, shift, data);
          break;
       default:
          Print("Invalid MA Method");
@@ -326,7 +326,7 @@ double            CMovingAverage::iMA(string symbol, ENUM_TIMEFRAMES timeframe, 
    if(shift < 0 || shift >= ArraySize(valArray))
      {
       Print("Invalid shift value.");
-      return 0.0;
+      return 0.0; 
      }
 
    switch(maMethod)
