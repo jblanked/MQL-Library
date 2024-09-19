@@ -240,15 +240,19 @@ double            CMovingAverage::iMA(string symbol, ENUM_TIMEFRAMES timeframe, 
    switch(maMethod)
      {
       case ENUM_MODE_SMA:
+         ArraySetAsSeries(data, true);
          return SimpleMA(period + shift - 1, period, data);
          break;
       case ENUM_MODE_LWMA:
+         ArraySetAsSeries(data, false);
          return LinearWeightedMA(ArraySize(data) - (shift + 1), period, data);
          break;
       case ENUM_MODE_EMA:
+         ArraySetAsSeries(data, false);
          return CalculateEMA(period, shift, data);
          break;
       case ENUM_MODE_SMMA:
+         ArraySetAsSeries(data, false);
          return SmoothedMA(period, shift, data);
          break;
       default:
