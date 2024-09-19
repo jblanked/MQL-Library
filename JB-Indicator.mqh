@@ -68,14 +68,14 @@ public:
    //+------------------------------------------------------------------+
    //| Positive Volume Index (PVI)                                      |
    //+------------------------------------------------------------------+
-   double            iPVI(ENUM_APPLIED_VOLUME volumeType, int shift)
+   double            iPVI(string symbol, ENUM_TIMEFRAMES timeframe, ENUM_APPLIED_VOLUME volumeType, int shift)
      {
       static double lastValue = 1.0;  // Initialize lastValue to 1.0, if not already set
 
       long Vol0, Vol1;
       MqlRates mqlRates[];
       ArraySetAsSeries(mqlRates, true);  // Ensure array is set as series
-      CopyRates(_Symbol, PERIOD_CURRENT, shift, 2, mqlRates);  // Fetch the last 2 bars
+      CopyRates(symbol, timeframe, shift, 2, mqlRates);  // Fetch the last 2 bars
 
       // Fetch volumes based on volume type (tick or real)
       if(volumeType == VOLUME_TICK)
