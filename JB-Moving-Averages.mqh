@@ -125,9 +125,13 @@ private:
       if(period > 0 && position >= (period - 1))
         {
          // Loop through the number of periods starting from the current position backwards
-         for(int i = 0; i < period; i++)
+         for(int i = 0; i < period; i++){
+            if((position - i) < 0 || ((position - i) >= ArraySize(price)))
+            {
+            continue;
+            }
             result += price[position - i];  // Sum up the prices from the current position backwards
-
+         }
          result /= period;  // Calculate the average
         }
 
