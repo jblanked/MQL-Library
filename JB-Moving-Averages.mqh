@@ -8,8 +8,8 @@
 #property strict
 enum ENUM_MOVING_AVERAGES
   {
-   ENUM_MODE_SMA = 0, // SMA
-   ENUM_MODE_EMA = 1, // EMA
+   ENUM_MODE_SMA = 0,  // SMA
+   ENUM_MODE_EMA = 1,  // EMA
    ENUM_MODE_SMMA = 2, // SMMA
    ENUM_MODE_LWMA = 3, // LWMA
   };
@@ -142,7 +142,6 @@ private:
       // Ensure we have enough data to calculate SMMA
       if(ArraySize(price) < period + shift)
         {
-         Print("Not enough data to calculate SMMA.");
          return 0.0;
         }
 
@@ -198,7 +197,6 @@ private:
       // Ensure we have enough data to calculate EMA
       if(ArraySize(price) < period + shift)
         {
-         Print("Not enough data to calculate EMA.");
          return 0.0;
         }
 
