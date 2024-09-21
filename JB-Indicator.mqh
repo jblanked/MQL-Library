@@ -7,7 +7,70 @@
 #property link      "https://www.jblanked.com/"
 #property strict
 #include <jb-array.mqh> // download from https://github.com/jblanked/MQL-Library/blob/main/JB-Array.mqh
-#ifdef __MQL4__ enum ENUM_APPLIED_VOLUME { VOLUME_TICK, VOLUME_REAL }; #endif
+
+#ifdef __MQL4__ enum ENUM_APPLIED_VOLUME { VOLUME_TICK, VOLUME_REAL };
+#else
+enum ENUM_ENVELOPE {MODE_LOWER = 1, MODE_UPPER = 0};
+enum ENUM_MACD {MODE_SIGNAL = 1, MODE_MAIN = 0};
+#endif
+
+/*
+   Best Expert Advisor Use:
+
+      #include <jb-indicator.mqh>
+      CIndicator indi;
+
+      int OnInit()
+      {
+         //--- get your indicator value (must be done in MT5 to initialize)
+         indi.iMA(_Symbol, PERIOD_CURRENT, 9, 0, MODE_EMA, PRICE_CLOSE, 1);
+      }
+
+      void OnTick()
+      {
+         //--- get indicator value again
+         const double ema9 = indi.iMA(_Symbol, PERIOD_CURRENT, 9, 0, MODE_EMA, PRICE_CLOSE, 1);
+
+         //--- do something with value
+      }
+
+   Best Indicator Use:
+
+      #include <jb-indicator.mqh>
+      CIndicator indi;
+
+      int OnInit()
+      {
+         //--- get your indicator value (must be done in MT5 to initialize)
+         indi.iMA(_Symbol, PERIOD_CURRENT, 9, 0, MODE_EMA, PRICE_CLOSE, 1);
+      }
+
+      int OnCalculate(const int rates_total,
+                const int prev_calculated,
+                const datetime &time[],
+                const double &open[],
+                const double &high[],
+                const double &low[],
+                const double &close[],
+                const long &tick_volume[],
+                const long &volume[],
+                const int &spread[])
+      {
+         int limit = rates_total - prev_calculated;
+
+         //---- set indicator values
+         for(int i = limit - 1; i >= 0; i--)
+         {
+
+         //--- get indicator value again
+         const double ema9 = indi.iMA(_Symbol, PERIOD_CURRENT, 9, 0, MODE_EMA, PRICE_CLOSE, i);
+
+         //--- do something with value
+         }
+
+         return(rates_total);
+      }
+*/
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -41,6 +104,14 @@ public:
    double            iADX(const string symbol, const ENUM_TIMEFRAMES timeframe, const int adxPeriod, ENUM_APPLIED_PRICE appliedPrice, int adxMode = 0, const int shift = 0, const bool copyBuffer = true);
    double            iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe, const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 1, const bool copyBuffer = true);
    double            iEnvelopes(const string symbol, const ENUM_TIMEFRAMES timeframe, const int envPeriod, const int maShift,  const ENUM_MA_METHOD envMethod, const int appliedPriceOrHandle, const double envDeviation, const int envMode = 0, const int shift = 1, const bool copyBuffer = true);
+   double            iMACD(const string symbol, const ENUM_TIMEFRAMES timeframe, const int fastPeriod, const int slowPeriod, const int signalPeriod, ENUM_APPLIED_PRICE appliedPrice, int macdMode = 0, const int shift = 0, const bool copyBuffer = true);
+   double            iAO(const string symbol, const ENUM_TIMEFRAMES timeframe, const int shift = 0, const bool copyBuffer = true);
+   double            iMomentum(const string symbol, const ENUM_TIMEFRAMES timeframe, const int momemtumPeriod, ENUM_APPLIED_PRICE appliedPrice, const int shift = 0, const bool copyBuffer = true);
+   double            iWPR(const string symbol, const ENUM_TIMEFRAMES timeframe, const int wprPeriod, const int shift = 0, const bool copyBuffer = true);
+   double            iBullsPower(const string symbol, const ENUM_TIMEFRAMES timeframe, const int bullPeriod, ENUM_APPLIED_PRICE appliedPrice, const int shift = 0, const bool copyBuffer = true);
+   double            iBearsPower(const string symbol, const ENUM_TIMEFRAMES timeframe, const int bearPeriod, ENUM_APPLIED_PRICE appliedPrice, const int shift = 0, const bool copyBuffer = true);
+   double            iATHR(const string symbol, const ENUM_TIMEFRAMES timeframe, const int shift = 0, const bool copyBuffer = true);
+   double            iStochastic(const string symbol, const ENUM_TIMEFRAMES timeframe, const int kPeriod, const int dPeriod, const int slowPeriod, const ENUM_MA_METHOD maMethod, ENUM_STO_PRICE stoPrice, const int stochMode = MODE_SIGNAL, const int shift = 0, const bool copyBuffer = true);
    double            iADR(const string symbol, const int period, const int shift)
      {
       double val = 0;
@@ -169,18 +240,18 @@ public:
          AvgP = (AvgP * (period - 1) + (diff > 0 ? diff : 0)) / period;
          AvgN = (AvgN * (period - 1) + (diff < 0 ? -diff : 0)) / period;
         }
-      double rsi;
+      double _rsi_;
       if(AvgN == 0.0)
         {
-         rsi = (AvgP == 0.0 ? 50.0 : 100.0);
+         _rsi_ = (AvgP == 0.0 ? 50.0 : 100.0);
         }
       else
         {
-         rsi = 100.0 - (100.0 / (1.0 + AvgP / AvgN));
+         _rsi_ = 100.0 - (100.0 / (1.0 + AvgP / AvgN));
         }
       if(isSeries)
          ArraySetAsSeries(array, true);
-      return rsi;
+      return _rsi_;
      }
 
 
@@ -348,6 +419,9 @@ private:
 
    int               helperIndex;
    CIndicatorHelper  temp;
+   double            tempProgress;
+   double            tempVal;
+   double            tempClose;
 public:
    CJBRates          rates;
 protected:
@@ -428,6 +502,191 @@ double CIndicator::iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 #endif
   }
 //+------------------------------------------------------------------+
+double CIndicator::iBullsPower(const string symbol, const ENUM_TIMEFRAMES timeframe, const int bullPeriod, ENUM_APPLIED_PRICE appliedPrice, const int shift = 0, const bool copyBuffer = true)
+  {
+#ifdef __MQL5__
+   this.helperName = "iBullsPower" + symbol + string(timeframe) + string(bullPeriod) + string(appliedPrice);
+   this.setHelper(this.helperName);
+
+   if(shift > this.temp.lastSize || !this.temp.isHandleSet)
+     {
+      this.temp.resize(shift + 3); // resize array
+      this.temp.lastSize = shift;
+     }
+
+//--- set handle
+   if(!this.temp.isHandleSet)
+     {
+      this.temp.handle = ::iBullsPower(symbol, timeframe, bullPeriod);
+
+      if(this.temp.handle == EMPTY_VALUE)
+        {
+         ::Print("Failed to set Bulls Power");
+         return EMPTY_VALUE;
+        }
+
+      this.temp.isHandleSet = true;
+     }
+
+   if(copyBuffer)
+     {
+      ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
+     }
+   this.data[this.helperIndex] = this.temp;
+   return this.temp.value[shift];
+#else
+   return ::iBullsPower(symbol, timeframe, bullPeriod, appliedPrice, shift);
+#endif
+  }
+//+------------------------------------------------------------------+
+double CIndicator::iBearsPower(const string symbol, const ENUM_TIMEFRAMES timeframe, const int bearPeriod, ENUM_APPLIED_PRICE appliedPrice, const int shift = 0, const bool copyBuffer = true)
+  {
+#ifdef __MQL5__
+   this.helperName = "iBearsPower" + symbol + string(timeframe) + string(bearPeriod) + string(appliedPrice);
+   this.setHelper(this.helperName);
+
+   if(shift > this.temp.lastSize || !this.temp.isHandleSet)
+     {
+      this.temp.resize(shift + 3); // resize array
+      this.temp.lastSize = shift;
+     }
+
+//--- set handle
+   if(!this.temp.isHandleSet)
+     {
+      this.temp.handle = ::iBearsPower(symbol, timeframe, bearPeriod);
+
+      if(this.temp.handle == EMPTY_VALUE)
+        {
+         ::Print("Failed to set Bears Power");
+         return EMPTY_VALUE;
+        }
+
+      this.temp.isHandleSet = true;
+     }
+
+   if(copyBuffer)
+     {
+      ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
+     }
+   this.data[this.helperIndex] = this.temp;
+   return this.temp.value[shift];
+#else
+   return ::iBearsPower(symbol, timeframe, bearPeriod, appliedPrice, shift);
+#endif
+  }
+//+------------------------------------------------------------------+
+double CIndicator::iWPR(const string symbol, const ENUM_TIMEFRAMES timeframe, const int wprPeriod, const int shift = 0, const bool copyBuffer = true)
+  {
+#ifdef __MQL5__
+   this.helperName = "iWPR" + symbol + string(timeframe) + string(wprPeriod);
+   this.setHelper(this.helperName);
+
+   if(shift > this.temp.lastSize || !this.temp.isHandleSet)
+     {
+      this.temp.resize(shift + 3); // resize array
+      this.temp.lastSize = shift;
+     }
+
+//--- set handle
+   if(!this.temp.isHandleSet)
+     {
+      this.temp.handle = ::iWPR(symbol, timeframe, wprPeriod);
+
+      if(this.temp.handle == EMPTY_VALUE)
+        {
+         ::Print("Failed to set Larry Williams' Percent Range.");
+         return EMPTY_VALUE;
+        }
+
+      this.temp.isHandleSet = true;
+     }
+
+   if(copyBuffer)
+     {
+      ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
+     }
+   this.data[this.helperIndex] = this.temp;
+   return this.temp.value[shift];
+#else
+   return ::iWPR(symbol, timeframe, wprPeriod, shift);
+#endif
+  }
+//+------------------------------------------------------------------+
+double CIndicator::iMomentum(const string symbol, const ENUM_TIMEFRAMES timeframe, const int momemtumPeriod, ENUM_APPLIED_PRICE appliedPrice, const int shift = 0, const bool copyBuffer = true)
+  {
+#ifdef __MQL5__
+   this.helperName = "iMomentum" + symbol + string(timeframe) + string(momemtumPeriod) + string(appliedPrice);
+   this.setHelper(this.helperName);
+
+   if(shift > this.temp.lastSize || !this.temp.isHandleSet)
+     {
+      this.temp.resize(shift + 3); // resize array
+      this.temp.lastSize = shift;
+     }
+
+//--- set handle
+   if(!this.temp.isHandleSet)
+     {
+      this.temp.handle = ::iMomentum(symbol, timeframe, momemtumPeriod, appliedPrice);
+
+      if(this.temp.handle == EMPTY_VALUE)
+        {
+         ::Print("Failed to set Momemtum");
+         return EMPTY_VALUE;
+        }
+
+      this.temp.isHandleSet = true;
+     }
+
+   if(copyBuffer)
+     {
+      ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
+     }
+   this.data[this.helperIndex] = this.temp;
+   return this.temp.value[shift];
+#else
+   return ::iMomentum(symbol, timeframe, momemtumPeriod, appliedPrice, shift);
+#endif
+  }
+//+------------------------------------------------------------------+
+double CIndicator::iAO(const string symbol, const ENUM_TIMEFRAMES timeframe, const int shift = 0, const bool copyBuffer = true)
+  {
+#ifdef __MQL5__
+   this.helperName = "iAO" + symbol + string(timeframe);
+   this.setHelper(this.helperName);
+
+   if(shift > this.temp.lastSize || !this.temp.isHandleSet)
+     {
+      this.temp.resize(shift + 3); // resize array
+      this.temp.lastSize = shift;
+     }
+
+//--- set handle
+   if(!this.temp.isHandleSet)
+     {
+      this.temp.handle = ::iAO(symbol, timeframe);
+
+      if(this.temp.handle == EMPTY_VALUE)
+        {
+         ::Print("Failed to set Awesome Oscillator");
+         return EMPTY_VALUE;
+        }
+
+      this.temp.isHandleSet = true;
+     }
+
+   if(copyBuffer)
+     {
+      ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
+     }
+   this.data[this.helperIndex] = this.temp;
+   return this.temp.value[shift];
+#else
+   return ::iAO(symbol, timeframe, shift);
+#endif
+  }
+//+------------------------------------------------------------------+
 double CIndicator::iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, const int atrPeriod, const int shift, const bool copyBuffer = true)
   {
 #ifdef __MQL5__
@@ -505,6 +764,44 @@ double CIndicator::iADX(const string symbol, const ENUM_TIMEFRAMES timeframe, co
 #endif
   }
 //+------------------------------------------------------------------+
+double CIndicator::iStochastic(const string symbol, const ENUM_TIMEFRAMES timeframe, const int kPeriod, const int dPeriod, const int slowPeriod, const ENUM_MA_METHOD maMethod, ENUM_STO_PRICE stoPrice, const int stochMode = MODE_SIGNAL, const int shift = 0, const bool copyBuffer = true)
+  {
+#ifdef __MQL5__
+   this.helperName = "iStochastic" + symbol + string(timeframe) + string(kPeriod) + string(dPeriod) + string(slowPeriod) + EnumToString(maMethod) + EnumToString(stoPrice);
+   this.setHelper(this.helperName);
+
+   if(shift > this.temp.lastSize || !this.temp.isHandleSet)
+     {
+      this.temp.resize(shift + 3); // resize array
+      this.temp.lastSize = shift;
+     }
+
+//--- set handle
+   if(!this.temp.isHandleSet)
+     {
+      this.temp.handle = ::iStochastic(symbol, timeframe, kPeriod, dPeriod, slowPeriod, maMethod, stoPrice);
+
+      if(this.temp.handle == EMPTY_VALUE)
+        {
+         ::Print("Failed to set Stochastic.");
+
+         return EMPTY_VALUE;
+        }
+
+      this.temp.isHandleSet = true;
+     }
+
+   if(copyBuffer)
+     {
+      ::CopyBuffer(this.temp.handle, stochMode, 0, shift + 1, this.temp.value);
+     }
+   this.data[this.helperIndex] = this.temp;
+   return this.temp.value[shift];
+#else
+   return ::iStochastic(symbol, timeframe, kPeriod, dPeriod, slowPeriod, maMethod, stoPrice, stochMode, shift);
+#endif
+  }
+//+------------------------------------------------------------------+
 double CIndicator::iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe, const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 1, const bool copyBuffer = true)
   {
 #ifdef __MQL5__
@@ -578,6 +875,44 @@ double CIndicator::iEnvelopes(const string symbol, const ENUM_TIMEFRAMES timefra
    return this.temp.value[shift];
 #else
    return ::iEnvelopes(symbol, timeframe, envPeriod, maShift, envMethod, appliedPriceOrHandle, envDeviation, envMode, shift);
+#endif
+  }
+//+------------------------------------------------------------------+
+double CIndicator::iMACD(const string symbol, const ENUM_TIMEFRAMES timeframe, const int fastPeriod, const int slowPeriod, const int signalPeriod, ENUM_APPLIED_PRICE appliedPrice, int macdMode = 0, const int shift = 0, const bool copyBuffer = true)
+  {
+#ifdef __MQL5__
+   this.helperName = "iMACD" + symbol + string(timeframe) + string(fastPeriod) + string(slowPeriod) + string(signalPeriod) + string(appliedPrice) + string(macdMode);
+   this.setHelper(this.helperName);
+
+   if(shift > this.temp.lastSize || !this.temp.isHandleSet)
+     {
+      this.temp.resize(shift + 3); // resize array
+      this.temp.lastSize = shift;
+     }
+
+//--- set handle
+   if(!this.temp.isHandleSet)
+     {
+      this.temp.handle = ::iMACD(symbol, timeframe, fastPeriod, slowPeriod, signalPeriod, appliedPrice);
+
+      if(this.temp.handle == EMPTY_VALUE)
+        {
+         ::Print("Failed to set MACD.");
+
+         return EMPTY_VALUE;
+        }
+
+      this.temp.isHandleSet = true;
+     }
+
+   if(copyBuffer)
+     {
+      ::CopyBuffer(this.temp.handle, macdMode, 0, shift + 1, this.temp.value);
+     }
+   this.data[this.helperIndex] = this.temp;
+   return this.temp.value[shift];
+#else
+   return ::iMACD(symbol, timeframe, fastPeriod, slowPeriod, signalPeriod, appliedPrice, macdMode, shift);
 #endif
   }
 //+------------------------------------------------------------------+
@@ -773,6 +1108,69 @@ double CIndicator::iMAOnArray(double &array[], const int period, const int maShi
    return 0;
 
   }
+//+------------------------------------------------------------------+
+double CIndicator::iATHR(const string symbol, const ENUM_TIMEFRAMES timeframe, const int shift = 0, const bool copyBuffer = true)
+  {
+   this.tempProgress = 0;
+   this.tempVal = 0;
+   this.tempClose = iClose(symbol, timeframe, shift);
+
+//--- EMA and SMA Moving Averages (12 indicators)
+   int ma_periods[] = {10, 20, 30, 50, 100, 200};
+   for(int i = 0; i < ArraySize(ma_periods); i++)
+     {
+      // EMA
+      this.tempVal = this.iMA(symbol, timeframe, ma_periods[i], 0, MODE_EMA, PRICE_CLOSE, shift, copyBuffer);
+      this.tempProgress += (this.tempClose > this.tempVal) ? 1 : (this.tempClose < this.tempVal) ? -1 : 0;
+
+      // SMA
+      this.tempVal = this.iMA(symbol, timeframe, ma_periods[i], 0, MODE_SMA, PRICE_CLOSE, shift, copyBuffer);
+      this.tempProgress += (this.tempClose > this.tempVal) ? 1 : (this.tempClose < this.tempVal) ? -1 : 0;
+     }
+
+//--- VMA 20
+   this.tempVal = this.iMA(symbol, timeframe, 20, 0, MODE_LWMA, PRICE_WEIGHTED, shift, copyBuffer);
+   this.tempProgress += (this.tempClose > this.tempVal) ? 1 : (this.tempClose < this.tempVal) ? -1 : 0;
+
+//--- RSI 14
+   this.tempVal = this.iRSI(symbol, timeframe, 14, PRICE_CLOSE, shift, copyBuffer);
+   this.tempProgress += (this.tempVal < 30) ? -1 : (this.tempVal > 70) ? 1 : 0;
+
+//--- Awesome Oscillator (AO)
+   this.tempVal = this.iAO(symbol, timeframe);
+   this.tempProgress += (this.tempVal > 0) ? 1 : (this.tempVal < 0) ? -1 : 0;
+
+//--- Momentum
+   this.tempVal = this.iMomentum(symbol, timeframe, 10, PRICE_CLOSE, shift, copyBuffer);
+   this.tempProgress += (this.tempVal > 100) ? 1 : (this.tempVal < 100) ? -1 : 0;
+
+//--- MACD
+   this.tempVal = this.iMACD(symbol, timeframe, 12, 26, 9, PRICE_CLOSE, shift, copyBuffer);
+   this.tempProgress += (this.tempVal > 0) ? 1 : (this.tempVal < 0) ? -1 : 0;
+
+//--- Williams' Percent Range (WPR) 14
+   this.tempVal = this.iWPR(symbol, timeframe, 14, shift, copyBuffer);
+   this.tempProgress += (this.tempVal < -70) ? -1 : (this.tempVal > -30) ? 1 : 0;
+
+//--- Bulls Power
+   this.tempVal = this.iBullsPower(symbol, timeframe, 14, PRICE_CLOSE, shift, copyBuffer);
+   this.tempProgress += (this.tempVal > 0) ? 1 : (this.tempVal < 0) ? -1 : 0;
+
+//--- Bears Power
+   this.tempVal = this.iBearsPower(symbol, timeframe, 14, PRICE_CLOSE, shift, copyBuffer);
+   this.tempProgress += (this.tempVal > 0) ? -1 : (this.tempVal < 0) ? 1 : 0;
+
+//--- Stochastic 14, 3, 3 SMA
+   this.tempVal = this.iStochastic(symbol, timeframe, 14, 3, 3, MODE_SMA, STO_LOWHIGH, shift, copyBuffer);
+   this.tempProgress += (this.tempVal < 30) ? -1 : (this.tempVal > 70) ? 1 : 0;
+
+// Total indicators: 12 MAs + 1 VMA + 8 others = 21
+// Each contributes between -1 and +1, so tempProgress ranges from -21 to +21
+
+//--- Return a value between 0 and 100
+   return ((this.tempProgress + 21.0) / 42.0) * 100.0;
+  }
+
 //+------------------------------------------------------------------+
 #ifdef __MQL5__
 bool CIndicator::createBuffer(const string name, const ENUM_DRAW_TYPE drawType, const ENUM_LINE_STYLE style, const color color_, const int width, const int index, double &dataArray[], const bool showData = true, const ENUM_INDEXBUFFER_TYPE bufferType = INDICATOR_DATA, const int arrowCode = 233)
