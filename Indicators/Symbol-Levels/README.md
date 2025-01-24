@@ -1,10 +1,13 @@
 ### Symbol-Levels
-MetaTrader 4 and 5 indicator that displays the selected timeframe and price level on the current chart. It also sends an alert when price reaches that level.
+A MetaTrader 4 and 5 indicator that displays the selected timeframe and price level on the current chart. It alerts when price reaches the specified level.
 
-Parameters
-- Timeframe: The timeframe of the price level for the indicator to use
-- Level: The level (Open, High, Low, Close) for the indicator to use
-- Candle: The candle index for the indicator to use (0 = current candle, 1 = previous, etc.)
+Parameters:
+- Timeframe: The timeframe for the price level calculation
+- Level: The price level type (Open, High, Low, Close)
+- Candle: The candle index (0 = current candle, 1 = previous candle, etc.)
 
 ### Getting Started
-To use this indicator, download the `.mq4` file (if using MQL4) or the `.mq5` file (if using MQL5) and compile it with the `MetaEditor` application. Indicators should be placed in the `Indicators` folder.
+To use this indicator:
+1. Download the appropriate file (`.mq4` for MQL4 or `.mq5` for MQL5)
+2. Compile it using the `MetaEditor` application
+3. Place the compiled indicator in your `Indicators` folder
