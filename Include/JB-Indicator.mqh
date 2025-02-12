@@ -15,7 +15,7 @@ enum ENUM_MACD {MODE_SIGNAL = 1, MODE_MAIN = 0};
 #endif
 
 /*
-   Best Expert Advisor Use:
+   Best Expert Advisor Use (for getting indicator values):
 
       #include <jb-indicator.mqh>
       CIndicator indi;
@@ -34,7 +34,7 @@ enum ENUM_MACD {MODE_SIGNAL = 1, MODE_MAIN = 0};
          //--- do something with value
       }
 
-   Best Indicator Use:
+   Best Indicator Use (for getting indicator values):
 
       #include <jb-indicator.mqh>
       CIndicator indi;
@@ -96,6 +96,13 @@ public:
    bool              createBuffer(const string name, const int drawType, const ENUM_LINE_STYLE style, const color color_, const int width, const int index, double & dataArray[], const bool showData = true, const ENUM_INDEXBUFFER_TYPE bufferType = INDICATOR_DATA, const int arrowCode = 233);
 #endif
 
+#ifdef __MQL5__
+   //--- uses objects to plot indicator values (I use this to display specific indicator values while backtesting)
+   void              draw(double & bufferData[], const ENUM_DRAW_TYPE drawType, const ENUM_LINE_STYLE style, const color color_, const int width, const int arrowCode = 233);
+#else
+   void              draw(double & bufferData[], const int drawType, const ENUM_LINE_STYLE style, const color color_, const int width, const int arrowCode = 233);
+#endif
+
    //--- direct indicator values
    double            iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, const int maPeriod, const int maShift, const ENUM_MA_METHOD maMethod, const int appliedPriceOrHandle, const int shift, const bool copyBuffer = true);
    double            iMAOnArray(double & array[], const int period, const int maShift, const ENUM_MA_METHOD maMethod, const int shift);
@@ -104,6 +111,7 @@ public:
    double            iADX(const string symbol, const ENUM_TIMEFRAMES timeframe, const int adxPeriod, ENUM_APPLIED_PRICE appliedPrice, int adxMode = 0, const int shift = 0, const bool copyBuffer = true);
    double            iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe, const string indicatorAndFolderNameOnly = "IndicatorName", const int buffer = 0, const int shift = 1, const bool copyBuffer = true);
    double            iEnvelopes(const string symbol, const ENUM_TIMEFRAMES timeframe, const int envPeriod, const int maShift,  const ENUM_MA_METHOD envMethod, const int appliedPriceOrHandle, const double envDeviation, const int envMode = 0, const int shift = 1, const bool copyBuffer = true);
+   double            iFractals(const string symbol, const ENUM_TIMEFRAMES timeframe, const int fractalMode = 0, const int shift = 0, const bool copyBuffer = true);
    double            iMACD(const string symbol, const ENUM_TIMEFRAMES timeframe, const int fastPeriod, const int slowPeriod, const int signalPeriod, ENUM_APPLIED_PRICE appliedPrice, int macdMode = 0, const int shift = 0, const bool copyBuffer = true);
    double            iAO(const string symbol, const ENUM_TIMEFRAMES timeframe, const int shift = 0, const bool copyBuffer = true);
    double            iMomentum(const string symbol, const ENUM_TIMEFRAMES timeframe, const int momemtumPeriod, ENUM_APPLIED_PRICE appliedPrice, const int shift = 0, const bool copyBuffer = true);
@@ -459,7 +467,7 @@ double CIndicator:: iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, co
       ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
      }
    this.data[this.helperIndex] = this.temp;
-   return this.temp.value[shift];
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
 #else
    return ::iMA(symbol, timeframe, maPeriod, maShift, maMethod, appliedPriceOrHandle, shift);
 #endif
@@ -496,7 +504,7 @@ double CIndicator::iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, co
       ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
      }
    this.data[this.helperIndex] = this.temp;
-   return this.temp.value[shift];
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
 #else
    return ::iRSI(symbol, timeframe, rsiPeriod, appliedPriceOrHandle, shift);
 #endif
@@ -533,7 +541,7 @@ double CIndicator::iBullsPower(const string symbol, const ENUM_TIMEFRAMES timefr
       ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
      }
    this.data[this.helperIndex] = this.temp;
-   return this.temp.value[shift];
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
 #else
    return ::iBullsPower(symbol, timeframe, bullPeriod, appliedPrice, shift);
 #endif
@@ -570,7 +578,7 @@ double CIndicator::iBearsPower(const string symbol, const ENUM_TIMEFRAMES timefr
       ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
      }
    this.data[this.helperIndex] = this.temp;
-   return this.temp.value[shift];
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
 #else
    return ::iBearsPower(symbol, timeframe, bearPeriod, appliedPrice, shift);
 #endif
@@ -607,7 +615,7 @@ double CIndicator::iWPR(const string symbol, const ENUM_TIMEFRAMES timeframe, co
       ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
      }
    this.data[this.helperIndex] = this.temp;
-   return this.temp.value[shift];
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
 #else
    return ::iWPR(symbol, timeframe, wprPeriod, shift);
 #endif
@@ -644,7 +652,7 @@ double CIndicator::iMomentum(const string symbol, const ENUM_TIMEFRAMES timefram
       ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
      }
    this.data[this.helperIndex] = this.temp;
-   return this.temp.value[shift];
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
 #else
    return ::iMomentum(symbol, timeframe, momemtumPeriod, appliedPrice, shift);
 #endif
@@ -681,9 +689,46 @@ double CIndicator::iAO(const string symbol, const ENUM_TIMEFRAMES timeframe, con
       ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
      }
    this.data[this.helperIndex] = this.temp;
-   return this.temp.value[shift];
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
 #else
    return ::iAO(symbol, timeframe, shift);
+#endif
+  }
+//+------------------------------------------------------------------+
+double CIndicator::iFractals(const string symbol, const ENUM_TIMEFRAMES timeframe, const int fractalMode = 0, const int shift = 0, const bool copyBuffer = true)
+  {
+#ifdef __MQL5__
+   this.helperName = "iFractals" + symbol + string(timeframe);
+   this.setHelper(this.helperName);
+
+   if(shift > this.temp.lastSize || !this.temp.isHandleSet)
+     {
+      this.temp.resize(shift + 3); // resize array
+      this.temp.lastSize = shift; 
+     }
+
+//--- set handle
+   if(!this.temp.isHandleSet)
+     {
+      this.temp.handle = ::iFractals(symbol, timeframe);
+
+      if(this.temp.handle == EMPTY_VALUE)
+        {
+         ::Print("Failed to set Fractals");
+         return EMPTY_VALUE;
+        }
+
+      this.temp.isHandleSet = true;
+     }
+
+   if(copyBuffer)
+     {
+      ::CopyBuffer(this.temp.handle, fractalMode, 0, shift + 1, this.temp.value);
+     }
+   this.data[this.helperIndex] = this.temp;
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
+#else
+   return ::iFractals(symbol, timeframe, fractalMode, shift);
 #endif
   }
 //+------------------------------------------------------------------+
@@ -718,7 +763,7 @@ double CIndicator::iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, co
       ::CopyBuffer(this.temp.handle, 0, 0, shift + 1, this.temp.value);
      }
    this.data[this.helperIndex] = this.temp;
-   return this.temp.value[shift];
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
 #else
    return ::iATR(symbol, timeframe, atrPeriod, shift);
 #endif
@@ -758,7 +803,7 @@ double CIndicator::iADX(const string symbol, const ENUM_TIMEFRAMES timeframe, co
       ::CopyBuffer(this.temp.handle, adxMode, 0, shift + 1, this.temp.value);
      }
    this.data[this.helperIndex] = this.temp;
-   return this.temp.value[shift];
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
 #else
    return ::iADX(symbol, timeframe, adxPeriod, appliedPrice, adxMode, shift);
 #endif
@@ -796,7 +841,7 @@ double CIndicator::iStochastic(const string symbol, const ENUM_TIMEFRAMES timefr
       ::CopyBuffer(this.temp.handle, stochMode, 0, shift + 1, this.temp.value);
      }
    this.data[this.helperIndex] = this.temp;
-   return this.temp.value[shift];
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
 #else
    return ::iStochastic(symbol, timeframe, kPeriod, dPeriod, slowPeriod, maMethod, stoPrice, stochMode, shift);
 #endif
@@ -834,7 +879,7 @@ double CIndicator::iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe,
       ::CopyBuffer(this.temp.handle, buffer, 0, shift + 1, this.temp.value);
      }
    this.data[this.helperIndex] = this.temp;
-   return this.temp.value[shift];
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
 #else
    return ::iCustom(symbol, timeframe,  indicatorAndFolderNameOnly + ".ex4", buffer, shift);
 #endif
@@ -872,7 +917,7 @@ double CIndicator::iEnvelopes(const string symbol, const ENUM_TIMEFRAMES timefra
       ::CopyBuffer(this.temp.handle, envMode, 0, shift + 1, this.temp.value);
      }
    this.data[this.helperIndex] = this.temp;
-   return this.temp.value[shift];
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
 #else
    return ::iEnvelopes(symbol, timeframe, envPeriod, maShift, envMethod, appliedPriceOrHandle, envDeviation, envMode, shift);
 #endif
@@ -910,7 +955,7 @@ double CIndicator::iMACD(const string symbol, const ENUM_TIMEFRAMES timeframe, c
       ::CopyBuffer(this.temp.handle, macdMode, 0, shift + 1, this.temp.value);
      }
    this.data[this.helperIndex] = this.temp;
-   return this.temp.value[shift];
+   return shift >= ArraySize(this.temp.value) ? EMPTY_VALUE : this.temp.value[shift];
 #else
    return ::iMACD(symbol, timeframe, fastPeriod, slowPeriod, signalPeriod, appliedPrice, macdMode, shift);
 #endif
