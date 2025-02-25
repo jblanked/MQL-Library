@@ -10,17 +10,12 @@
 #property strict
 #property indicator_buffers 6
 #property indicator_plots 6
-#include <hull-ma.mqh>
+#include <twin-hma.mqh>
 #include <jb-indicator.mqh>
-CHullMA *hmaFast, *hmaSlow;
+CTwinHMA *thma;
 //---- input parameters
 input int                  inpHMAPeriodFast = 12;          // HMA Period Fast
-input ENUM_MA_METHOD       inpHMAMethodFast = MODE_EMA;    // HMA Method Fast
-input ENUM_APPLIED_PRICE   inpHMAPriceFast  = PRICE_CLOSE; // HMA Applied Price Fast
-//
 input int                  inpHMAPeriodSlow = 100;         // HMA Period Slow
-input ENUM_MA_METHOD       inpHMAMethodSlow = MODE_EMA;    // HMA Method Slow
-input ENUM_APPLIED_PRICE   inpHMAPriceSlow  = PRICE_CLOSE; // HMA Applied Price Slow
 //---- buffers
 double UptrendFast[]; // Buffer 0
 double DntrendFast[]; // Buffer 1
@@ -62,10 +57,9 @@ int OnInit()
    {
       return INIT_FAILED;
    }
-   //
-   hmaFast = new CHullMA(_Symbol, PERIOD_CURRENT, inpHMAPeriodFast, inpHMAMethodFast, inpHMAPriceFast);
-   hmaSlow = new CHullMA(_Symbol, PERIOD_CURRENT, inpHMAPeriodSlow, inpHMAMethodSlow, inpHMAPriceSlow);
-   //
+//
+   thma = new CTwinHMA(_Symbol, PERIOD_CURRENT, inpHMAPeriodFast, inpHMAPeriodSlow);
+//
    IndicatorSetInteger(INDICATOR_DIGITS, _Digits);
    IndicatorSetString(INDICATOR_SHORTNAME, "Twin Hull Moving Average(" + IntegerToString(inpHMAPeriodFast) + ", " + IntegerToString(inpHMAPeriodSlow) + ")");
 //--- arrow shifts when drawing
@@ -112,11 +106,11 @@ int OnCalculate(const int rates_total,
    else limit++;
 
    limit = MathMax(limit, maxi_candles);
-   hmaFast.run(MathMin(limit, maxi_candles));
-   hmaSlow.run(MathMin(limit, maxi_candles));
+   thma.run(limit);
 
    int x = limit - 1;
-   int arr_size = ArraySize(hmaFast.Uptrend);
+   int arr_size = ArraySize(thma.UptrendFast);
+   
    while(x >= 0)
    {
       if(x >= arr_size)
@@ -126,36 +120,15 @@ int OnCalculate(const int rates_total,
       }
 
       // set lines
-      UptrendFast[x] = hmaFast.Uptrend[x];
-      DntrendFast[x] = hmaFast.Dntrend[x];
-      //
-      UptrendSlow[x] = hmaSlow.Uptrend[x];
-      DntrendSlow[x] = hmaSlow.Dntrend[x];
+      UptrendFast[x] = thma.UptrendFast[x];
+      DntrendFast[x] = thma.DntrendFast[x];
+
+      UptrendSlow[x] = thma.UptrendSlow[x];
+      DntrendSlow[x] = thma.DntrendSlow[x];
 
       // set arrows
-      if(hmaFast.BuyArrow[x] != EMPTY_VALUE &&
-            hmaFast.Uptrend[x] != EMPTY_VALUE &&
-            hmaSlow.Uptrend[x] != EMPTY_VALUE &&
-            hmaSlow.Dntrend[x] == EMPTY_VALUE &&
-            hmaFast.Dntrend[x] == EMPTY_VALUE)
-      {
-         BuyArrow[x] = hmaFast.BuyArrow[x];
-         SellArrow[x] = EMPTY_VALUE;
-      }
-      else if(hmaFast.SellArrow[x] != EMPTY_VALUE &&
-              hmaFast.Dntrend[x] != EMPTY_VALUE &&
-              hmaSlow.Dntrend[x] != EMPTY_VALUE &&
-              hmaSlow.Uptrend[x] == EMPTY_VALUE &&
-              hmaFast.Uptrend[x] == EMPTY_VALUE)
-      {
-         SellArrow[x] = hmaFast.SellArrow[x];
-         BuyArrow[x] = EMPTY_VALUE;
-      }
-      else
-      {
-         BuyArrow[x] = EMPTY_VALUE;
-         SellArrow[x] = EMPTY_VALUE;
-      }
+      BuyArrow[x]  = thma.BuyArrow[x];
+      SellArrow[x] = thma.SellArrow[x];
 
       x--; // next iter
    }
@@ -167,8 +140,7 @@ int OnCalculate(const int rates_total,
 void OnDeinit(const int reason)
 {
    CIndicator indi;
-   indi.deletePointer(hmaFast);
-   indi.deletePointer(hmaSlow);
+   indi.deletePointer(thma);
 }
 //+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
