@@ -5,38 +5,41 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2024-2025,JBlanked LLC"
 #property link      "https://www.jblanked.com/trading-tools/"
-#property version   "1.00"
+#property version   "1.01"
 #property strict
 #property indicator_chart_window
 #property indicator_buffers 0
 #property indicator_plots 0
 #define CHART_ID 0
 
-//--- inputs
-input string inpStartTime = "01:00";  // Start Time (HH:MM)
-input string inpEndTime   = "23:00";  // End Time (HH:MM)
-input double inpFibLevel1 = 0.000000; // Fib Level 1
-input double inpFibLevel2 = 0.236068; // Fib Level 2
-input double inpFibLevel3 = 0.381966; // Fib Level 3
-input double inpFibLevel4 = 0.500000; // Fib Level 4
-input double inpFibLevel5 = 0.618034; // Fib Level 5
-input double inpFibLevel6 = 1.000000; // Fib Level 6
-input double inpFibLevel7 = 1.618034; // Fib Level 7
-input double inpFibLevel8 = 2.618034; // Fib Level 8
-input double inpFibLevel9 = 4.236068; // Fib Level 9
-input color  inpFibColor  = clrYellow;// Fib Color
-input int    inpFibWidth  = 1;        // Fib Width
+//--- v1.01 - jblanked: changed range from Open-to-Close to High-to-Low + added alerts
 
-//--- global variables for parsed start and end times
+//--- inputs
+input string inpStartTime   = "01:00";   // Start Time (HH:MM)
+input string inpEndTime     = "23:00";   // End Time (HH:MM)
+input double inpFibLevel1   = 0.000000;  // Fib Level 1
+input double inpFibLevel2   = 0.236068;  // Fib Level 2
+input double inpFibLevel3   = 0.381966;  // Fib Level 3
+input double inpFibLevel4   = 0.500000;  // Fib Level 4
+input double inpFibLevel5   = 0.618034;  // Fib Level 5
+input double inpFibLevel6   = 1.000000;  // Fib Level 6
+input double inpFibLevel7   = 1.618034;  // Fib Level 7
+input double inpFibLevel8   = 2.618034;  // Fib Level 8
+input double inpFibLevel9   = 4.236068;  // Fib Level 9
+input color  inpFibColor    = clrYellow; // Fib Color
+input int    inpFibWidth    = 1;         // Fib Width
+input bool   inpAllowAlerts = false;     // Allow Alerts?
+
 int startHour, startMinute;
 int endHour, endMinute;
-
+double prices[9];
+datetime last_alert;
 //+------------------------------------------------------------------+
 //| Custom indicator initialization function                         |
 //+------------------------------------------------------------------+
 int OnInit()
 {
-   //--- parse start time input ("HH:MM")
+//--- parse start time input ("HH:MM")
    string parts[];
    if(StringSplit(inpStartTime, ':', parts) < 2)
    {
@@ -46,7 +49,7 @@ int OnInit()
    startHour   = (int)StringToInteger(parts[0]);
    startMinute = (int)StringToInteger(parts[1]);
 
-   //--- parse end time input ("HH:MM")
+//--- parse end time input ("HH:MM")
    if(StringSplit(inpEndTime, ':', parts) < 2)
    {
       Print("Invalid end time input");
@@ -118,15 +121,16 @@ int OnCalculate(const int rates_total,
 //+------------------------------------------------------------------+
 void draw_fib(const int start_x, const int end_x)
 {
-   //--- Create a unique object name using the bar time for the starting bar
+//--- Create a unique object name using the bar time for the starting bar
    string obj_name = "Fib-Daily-Time-Input-" + TimeToString(iTime(_Symbol, PERIOD_CURRENT, start_x), TIME_DATE | TIME_MINUTES);
    if(ObjectFind(CHART_ID, obj_name) < 0)
    {
       //--- Get prices and times for the start and end bars
-      double price_1 = iOpen(_Symbol, PERIOD_CURRENT, start_x);
-      double price_2 = iClose(_Symbol, PERIOD_CURRENT, end_x);
+      double price_1 = iHigh(_Symbol, PERIOD_CURRENT, start_x);
+      double price_2 = iLow(_Symbol, PERIOD_CURRENT, end_x);
       datetime time_1 = iTime(_Symbol, PERIOD_CURRENT, start_x);
       datetime time_2 = iTime(_Symbol, PERIOD_CURRENT, end_x);
+      datetime today = iTime(_Symbol, PERIOD_D1, 0);
 
       //--- Create the Fibonacci retracement object
       ObjectCreate(CHART_ID, obj_name, OBJ_FIBO, 0, time_1, price_1, time_2, price_2);
@@ -144,6 +148,9 @@ void draw_fib(const int start_x, const int end_x)
          double f_val = inp_to_val(level + 1);
          ObjectSetDouble(CHART_ID, obj_name, OBJPROP_LEVELVALUE, level, f_val);
          ObjectSetString(CHART_ID, obj_name, OBJPROP_LEVELTEXT, level, DoubleToString(100.0 * f_val, 1) + "  %$");
+
+         // add today's values (for alerts later)
+         if(time_1 >= today) prices[level] = ObjectGetDouble(CHART_ID, obj_name, OBJPROP_LEVELVALUE, level);
       }
    }
 }
@@ -183,7 +190,36 @@ double inp_to_val(const int inp)
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
-   //--- Delete all objects created by this indicator
+//--- Delete all objects created by this indicator
    ObjectsDeleteAll(CHART_ID, "Fib-Daily-Time-Input-");
+}
+//+------------------------------------------------------------------+
+bool handleAlert(double fibLevel, int iteration)
+{
+   if(prices[iteration] == 0)
+   {
+      return false;
+   }
+
+   if((iClose(_Symbol, PERIOD_CURRENT, 0) >= (prices[iteration] - (_Point * 1))) && (iClose(_Symbol, PERIOD_CURRENT, 0) <= (prices[iteration] + (_Point * 1))))
+   {
+      // send alert
+      ::Alert(_Symbol + " is at the " + DoubleToString(100.0 * fibLevel, 1) + " level: " + DoubleToString(prices[iteration], _Digits));
+      ::SendNotification(_Symbol + " is at the " + DoubleToString(100.0 * fibLevel, 1) + " level: " + DoubleToString(prices[iteration], _Digits));
+      last_alert = iTime(_Symbol, PERIOD_CURRENT, 0);
+      return true;
+   }
+
+   return false;
+}
+//+------------------------------------------------------------------+
+void doAlert(void)
+{
+   if(inpAllowAlerts && last_alert != iTime(_Symbol, PERIOD_CURRENT, 0))
+   {
+      for(int i = 0; i < 9; i++)
+         if(handleAlert(inpFibLevel1, i))
+            return;
+   }
 }
 //+------------------------------------------------------------------+
