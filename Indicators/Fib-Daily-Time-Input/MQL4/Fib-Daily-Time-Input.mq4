@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2024-2025,JBlanked LLC"
 #property link      "https://www.jblanked.com/trading-tools/"
-#property version   "1.01"
+#property version   "1.02"
 #property strict
 #property indicator_chart_window
 #property indicator_buffers 0
@@ -13,6 +13,7 @@
 #define CHART_ID 0
 
 //--- v1.01 - jblanked: changed range from Open-to-Close to High-to-Low + added alerts
+//=== v1.02 - jblanked: restricted MT4 to only show the last two days
 
 //--- inputs
 input string inpStartTime   = "01:00";   // Start Time (HH:MM)
@@ -88,6 +89,13 @@ int OnCalculate(const int rates_total,
       //--- Check if we already processed this day
       if(dt.day == processed_day)
          continue;
+
+#ifdef __MQL4__
+      //--- only show today and yesterday (to avoid clutter)
+      if(dt.day != TimeDay(TimeCurrent()) && dt.day != TimeDay(TimeCurrent() - 86400))
+         continue;
+#endif
+
       processed_day = dt.day;
 
       //--- Build the datetime for the start time on this day
