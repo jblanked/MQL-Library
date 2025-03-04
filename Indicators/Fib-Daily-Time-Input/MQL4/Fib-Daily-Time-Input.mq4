@@ -16,7 +16,7 @@
 
 //--- inputs
 input string inpStartTime   = "01:00";   // Start Time (HH:MM)
-input string inpEndTime     = "23:00";   // End Time (HH:MM)
+input string inpEndTime     = "22:00";   // End Time (HH:MM)
 input double inpFibLevel1   = 0.000000;  // Fib Level 1
 input double inpFibLevel2   = 0.236068;  // Fib Level 2
 input double inpFibLevel3   = 0.381966;  // Fib Level 3
@@ -131,6 +131,13 @@ void draw_fib(const int start_x, const int end_x)
       datetime time_1 = iTime(_Symbol, PERIOD_CURRENT, start_x);
       datetime time_2 = iTime(_Symbol, PERIOD_CURRENT, end_x);
       datetime today = iTime(_Symbol, PERIOD_D1, 0);
+
+      // update price and time
+      if(price_2 > price_1)
+      {
+         price_1 = iLow(_Symbol, PERIOD_CURRENT, start_x);
+         price_2 = iHigh(_Symbol, PERIOD_CURRENT, end_x);
+      }
 
       //--- Create the Fibonacci retracement object
       ObjectCreate(CHART_ID, obj_name, OBJ_FIBO, 0, time_1, price_1, time_2, price_2);
