@@ -1,4 +1,4 @@
-### Fib-Time_input
+### Fib-Time-Input
 A MetaTrader 4 and 5 indicator that draws Fibonacci retracement on the chart starting at the user input Start Time and ending at the user input End Time.
 
 ### Getting Started
