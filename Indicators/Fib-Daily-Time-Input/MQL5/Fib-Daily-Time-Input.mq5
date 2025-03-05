@@ -165,7 +165,7 @@ void draw_fib(const int start_x, const int end_x)
          ObjectSetString(CHART_ID, obj_name, OBJPROP_LEVELTEXT, level, DoubleToString(100.0 * f_val, 1) + "  %$");
 
          // add today's values (for alerts later)
-         if(time_1 >= today) prices[level] = ObjectGetDouble(CHART_ID, obj_name, OBJPROP_LEVELVALUE, level);
+         if(time_1 >= today) prices[level] = fib_price(obj_name, level);
       }
    }
 }
@@ -236,5 +236,14 @@ void doAlert(void)
          if(handleAlert(inpFibLevel1, i))
             return;
    }
+}
+//+------------------------------------------------------------------+
+double fib_price(string fib_object_name, int fib_level)
+{
+   const double onePrice = ObjectGetDouble(CHART_ID, fib_object_name, OBJPROP_PRICE, 0); //get   0% price
+   const double zeroPrice = ObjectGetDouble(CHART_ID, fib_object_name, OBJPROP_PRICE, 1); //get 100% price
+   const double range = onePrice - zeroPrice;
+   const double value = ObjectGetDouble(CHART_ID, fib_object_name, OBJPROP_LEVELVALUE, fib_level);
+   return zeroPrice + range * value;
 }
 //+------------------------------------------------------------------+
