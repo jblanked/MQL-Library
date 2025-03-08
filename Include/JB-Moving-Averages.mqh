@@ -48,7 +48,7 @@ private:
 #else
       for(int c = 0; c < Bars(symbol, timeframe); c++)
         {
-         valArray[c] = ::iCustom(symbol, timeframe,  indicatorAndFolderNameOnly + ".ex4", buffer, c);
+         valArray[c] = ::iCustom(symbol, timeframe,  indicatorAndFolderNameOnly, buffer, c);
         }
       return true;
 #endif
