@@ -177,16 +177,9 @@ datetime CTime::stringToTime(const string time, const datetime timeCurrent = 0) 
 bool CTime::allowTime(const bool usetimer, const string startTime, const string stopTime, datetime timeCurrent = 0)
 {
    timeCurrent = timeCurrent == 0 ? TimeCurrent() : timeCurrent;
-// ternary operator to return true if current time is allwoed
-   return !usetimer ? true : // if user selects dont use time, return true
-
-          (usetimer &&  // if user select use timer and
-           timeCurrent >= this.stringToTime(startTime, timeCurrent) && // time is greater than the start time and
-           timeCurrent <= this.stringToTime(stopTime, timeCurrent)) // time is less than the stop time
-          ? // if so
-          true // return true
-          : // otherwise
-          false; // return false
+   return
+      timeCurrent >= this.stringToTime(startTime, timeCurrent) &&
+      timeCurrent < this.stringToTime(stopTime, timeCurrent);
 }
 //+------------------------------------------------------------------+
 //|                                                                  |
