@@ -124,7 +124,7 @@ int OnCalculate(const int rates_total,
                  close[x + 2] > open[x + 2] && close[x + 1] < open[x + 1]) // both below EMA, bullish then bearish
          {
             // if high of bearish candle broke the high of bullish candle
-            if(high[x + 1] < high[x + 2])
+            if(high[x + 1] > high[x + 2])
             {
                sell[x] = high[x];
             }
