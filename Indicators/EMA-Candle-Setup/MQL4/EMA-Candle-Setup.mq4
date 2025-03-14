@@ -105,7 +105,6 @@ int OnCalculate(const int rates_total,
 //---
    const int arrr_size = ArraySize(buy);
    int x = limit - 1;
-   double close_price = 0.0;
    while(x >= 0)
    {
       if((x + 2) < arrr_size)
