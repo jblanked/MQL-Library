@@ -44,10 +44,12 @@ Need Indicator with alert notification for mt5 please
 input int                inpPeriod = 8;          // Period
 input ENUM_MA_METHOD     inpMethod = MODE_EMA;   // Method
 input ENUM_APPLIED_PRICE inpPrice  = PRICE_CLOSE;// Applied Price
+input bool               inpAlerts = false;      // Allow Alerts?
 //--- globals
 CIndicator indi; // from jb-indicator.mqh
 double buy[], sell[], ma_val[];
 int most;
+datetime last_alert;
 //+------------------------------------------------------------------+
 //| Custom indicator initialization function                         |
 //+------------------------------------------------------------------+
@@ -102,6 +104,7 @@ int OnCalculate(const int rates_total,
    ArraySetAsSeries(high, true);
    ArraySetAsSeries(low, true);
    ArraySetAsSeries(close, true);
+   ArraySetAsSeries(time, true);
 //---
    const int arrr_size = ArraySize(buy);
    int x = limit - 1;
@@ -130,6 +133,21 @@ int OnCalculate(const int rates_total,
          }
       }
       x--;
+   }
+   if(inpAlerts && last_alert != time[0])
+   {
+      last_alert = time[0];
+      if(buy[1] != EMPTY_VALUE && sell[1] == EMPTY_VALUE)
+      {
+         ::Alert("Bullish EMA-Candle-Setup on " + _Symbol);
+         ::SendNotification("Bullish EMA-Candle-Setup on " + _Symbol);
+      }
+
+      else if(sell[1] != EMPTY_VALUE && buy[1] == EMPTY_VALUE)
+      {
+         ::Alert("Bearish EMA-Candle-Setup on " + _Symbol);
+         ::SendNotification("Bearish EMA-Candle-Setup on " + _Symbol);
+      }
    }
 //--- return value of prev_calculated for next call
    return(rates_total);
