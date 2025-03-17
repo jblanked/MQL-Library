@@ -134,9 +134,9 @@ int OnCalculate(const int rates_total,
       }
       x--;
    }
-   if(inpAlerts && last_alert != time[0])
+   if(inpAlerts && last_alert != time[1])
    {
-      last_alert = time[0];
+      last_alert = time[1];
       if(buy[1] != EMPTY_VALUE && sell[1] == EMPTY_VALUE)
       {
          ::Alert("Bullish EMA-Candle-Setup on " + _Symbol);
