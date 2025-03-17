@@ -137,13 +137,13 @@ int OnCalculate(const int rates_total,
    if(inpAlerts && last_alert != time[1])
    {
       last_alert = time[1];
-      if(buy[1] != EMPTY_VALUE && sell[1] == EMPTY_VALUE)
+      if(buy[1] != EMPTY_VALUE && buy[1] != 0 && sell[1] == EMPTY_VALUE)
       {
          ::Alert("Bullish EMA-Candle-Setup on " + _Symbol);
          ::SendNotification("Bullish EMA-Candle-Setup on " + _Symbol);
       }
 
-      else if(sell[1] != EMPTY_VALUE && buy[1] == EMPTY_VALUE)
+      else if(sell[1] != EMPTY_VALUE && sell[1] != 0 && buy[1] == EMPTY_VALUE)
       {
          ::Alert("Bearish EMA-Candle-Setup on " + _Symbol);
          ::SendNotification("Bearish EMA-Candle-Setup on " + _Symbol);
