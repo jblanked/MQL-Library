@@ -6,7 +6,7 @@
 #property copyright "Copyright 2024-2025,JBlanked"
 #property link      "https://www.jblanked.com/"
 #property strict
-//--- Last Updated: March 8th, 2025
+//--- Last Updated: March 30th, 2025
 #include <jb-array.mqh> // download from https://github.com/jblanked/MQL-Library/blob/main/JB-Array.mqh
 
 #ifdef __MQL4__ enum ENUM_APPLIED_VOLUME { VOLUME_TICK, VOLUME_REAL };
@@ -131,6 +131,7 @@ public:
    bool              deletePointer(void *ptr); //--- delete pointer safely
    int               getMaxBars(const string symbol, const ENUM_TIMEFRAMES timeframe, const int userMaximum = 5000); //--- maximum candles
    string            uninitReasonText(int reasonCode);
+   int               windowFind(string name);
 
 private:
 
@@ -1327,6 +1328,20 @@ bool CIndicator::createBuffer(const string name, const int drawType, const ENUM_
    return true;
 }
 //+------------------------------------------------------------------+
+int CIndicator::windowFind(string name)
+{
+   int window = -1;
+   if((ENUM_PROGRAM_TYPE)MQLInfoInteger(MQL_PROGRAM_TYPE) == PROGRAM_INDICATOR)
+   {
+      window = ChartWindowFind();
+   }
+   else
+   {
+      window = ChartWindowFind(0, name);
+      if(window == -1) Print(__FUNCTION__ + "(): Error = ", GetLastError());
+   }
+   return(window);
+}
 //+------------------------------------------------------------------+
 #define JB_ASK SymbolInfoDouble(_Symbol, SYMBOL_ASK)
 #define JB_BID SymbolInfoDouble(_Symbol, SYMBOL_BID)
