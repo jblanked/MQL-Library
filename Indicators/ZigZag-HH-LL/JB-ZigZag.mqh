@@ -13,7 +13,7 @@ public:
    double            ZigZagBuffer[];
    double            HH[], LH[], HL[], LL[];
    //
-   CZigZag(
+                     CZigZag(
       string symbol,
       ENUM_TIMEFRAMES timeframe = PERIOD_CURRENT,
       bool draw = false,
@@ -23,14 +23,14 @@ public:
       int max_count = 500,
       int recount = 50
    ) :               m_symbol(symbol), m_timeframe(timeframe), m_depth(depth),
-      m_deviation(deviation), m_backstep(backstep), m_max_count(max_count),
-      m_recount(recount), m_draw(draw), is_set(false),
-      tag("CZigZag(" + string(depth) + "," + string(deviation) + "," + string(backstep) + ")")
+                     m_deviation(deviation), m_backstep(backstep), m_max_count(max_count),
+                     m_recount(recount), m_draw(draw), is_set(false),
+                     tag("CZigZag(" + string(depth) + "," + string(deviation) + "," + string(backstep) + ")")
    {
       // nothing to do for now
    };
 
-   ~CZigZag()
+                    ~CZigZag()
    {
       if(this.m_draw) ObjectsDeleteAll(0, this.tag);
    }
@@ -51,6 +51,7 @@ private:
    double            previousHigh;
    double            previousLow;
    bool              is_set;
+   int               arr_size;
    string            tag;
    //
    void              drawLabel(int shift, bool high);
@@ -63,7 +64,6 @@ private:
 //+------------------------------------------------------------------+
 void CZigZag::drawLabel(int shift, bool high)
 {
-   const int arr_size = ArraySize(HighMapBuffer);
    string status = "";
 
    if(high)
@@ -173,9 +173,12 @@ void CZigZag::run(int limit)
 {
    if(!this.is_set) this.set_as_series();
 
-   //--- refresh values
+   if((limit - 1) >= this.arr_size) return;
+
+//--- refresh values
    for (int i = (this.m_max_count - 1); i >= 0; i--)
    {
+      if(i >= this.arr_size) continue;
       ZigZagBuffer[i] = EMPTY_VALUE;
       HH[i]           = EMPTY_VALUE;
       LH[i]           = EMPTY_VALUE;
@@ -194,6 +197,7 @@ void CZigZag::run(int limit)
 // --- Recalculate the map buffers using original extreme-value logic.
    for(int shift = limit - 1; shift >= 0; shift--)
    {
+      if(shift >= this.arr_size) continue;
       // LOW processing using iLow() and iLowest()
       val = iLow(this.m_symbol, this.m_timeframe, iLowest(this.m_symbol, this.m_timeframe, MODE_LOW, this.m_depth, shift));
       if(val == lastlow)
@@ -207,6 +211,7 @@ void CZigZag::run(int limit)
          {
             for(back = 1; back <= this.m_backstep; back++)
             {
+               if(shift + back >= this.arr_size) continue;
                res = LowMapBuffer[shift + back];
                if((res != EMPTY_VALUE) && (res > val))
                   LowMapBuffer[shift + back] = EMPTY_VALUE;
@@ -231,6 +236,7 @@ void CZigZag::run(int limit)
          {
             for(back = 1; back <= this.m_backstep; back++)
             {
+               if(shift + back >= this.arr_size) continue;
                res = HighMapBuffer[shift + back];
                if((res != EMPTY_VALUE) && (res < val))
                   HighMapBuffer[shift + back] = EMPTY_VALUE;
@@ -259,6 +265,7 @@ void CZigZag::run(int limit)
       // If both buffers are empty at 'limit', scan upward.
       for(int shift = limit; shift >= 0; shift--)
       {
+         if(shift >= this.arr_size) continue;
          if(LowMapBuffer[shift] != EMPTY_VALUE)
          {
             curlow = LowMapBuffer[shift];
@@ -277,6 +284,7 @@ void CZigZag::run(int limit)
 // --- Final zigzag "cutting" and label drawing loop (original logic preserved, using EMPTY_VALUE).
    for(int shift = limit - 1; shift >= 0; shift--)
    {
+      if(shift >= this.arr_size) continue;
       res = EMPTY_VALUE;
       switch(whatlookfor)
       {
@@ -355,7 +363,7 @@ void CZigZag::run(int limit)
 //+------------------------------------------------------------------+
 void CZigZag::set_as_series(void)
 {
-   const int maxi = MathMin(Bars(this.m_symbol, this.m_timeframe) - this.m_depth, this.m_max_count) + 1;
+   const int maxi = MathMin(Bars(this.m_symbol, this.m_timeframe) - this.m_depth, this.m_max_count) + 3;
 
    ArrayInitialize(ZigZagBuffer, EMPTY_VALUE);
    ArrayInitialize(HH, EMPTY_VALUE);
@@ -373,7 +381,7 @@ void CZigZag::set_as_series(void)
    ArraySetAsSeries(HighMapBuffer, true);
    ArraySetAsSeries(LowMapBuffer, true);
 
-   ArrayResize(ZigZagBuffer, maxi);
+   arr_size = ArrayResize(ZigZagBuffer, maxi);
    ArrayResize(HH, maxi);
    ArrayResize(LH, maxi);
    ArrayResize(HL, maxi);
@@ -381,6 +389,6 @@ void CZigZag::set_as_series(void)
    ArrayResize(HighMapBuffer, maxi);
    ArrayResize(LowMapBuffer, maxi);
 
-   this.is_set = true;
+   this.is_set = arr_size != -1;
 }
 //+------------------------------------------------------------------+
