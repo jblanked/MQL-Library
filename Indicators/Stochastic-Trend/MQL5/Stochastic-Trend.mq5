@@ -99,7 +99,6 @@ int OnInit()
       return INIT_FAILED;
    }
 //--- configure
-#ifdef __MQL5__
    trend = NULL;
    trend = new CStochasticTrend(_Symbol, PERIOD_CURRENT, BUY_LINE, SELL_LINE, inpMAPeriod1,  inpMAPeriod2, inpStoPeriodK, inpStoPeriodD, inpStoPeriodS, inpPriceFilter);
 //--- check
@@ -107,7 +106,6 @@ int OnInit()
    {
       return INIT_FAILED;
    }
-#endif
 //---set
    IndicatorSetString(INDICATOR_SHORTNAME, "Stochastic-Trend");
    IndicatorSetInteger(INDICATOR_DIGITS, _Digits);
