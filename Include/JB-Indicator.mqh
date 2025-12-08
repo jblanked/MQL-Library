@@ -6,8 +6,8 @@
 #property copyright "Copyright 2024-2025,JBlanked"
 #property link      "https://www.jblanked.com/"
 #property strict
-//--- Last Updated: March 30th, 2025
-#include <jb-array.mqh> // download from https://github.com/jblanked/MQL-Library/blob/main/JB-Array.mqh
+//--- Last Updated: December 7th, 2025
+#include <jb-array.mqh> // download from https://github.com/jblanked/MQL-Library/blob/main/Include/JB-Array.mqh
 
 #ifdef __MQL4__ enum ENUM_APPLIED_VOLUME { VOLUME_TICK, VOLUME_REAL };
 #else
@@ -266,7 +266,7 @@ int CIndicator::getMaxBars(const string symbol, const ENUM_TIMEFRAMES timeframe,
 string CIndicator::uninitReasonText(int reasonCode)
 {
    string text = "";
-   //---
+//---
    switch(reasonCode)
    {
    case REASON_ACCOUNT:
@@ -302,7 +302,7 @@ string CIndicator::uninitReasonText(int reasonCode)
    default:
       text = "Another reason.";
    }
-   //---
+//---
    return text;
 }
 //+------------------------------------------------------------------+
@@ -344,7 +344,7 @@ double CIndicator::iPVI(const string symbol, const ENUM_TIMEFRAMES timeframe, co
    {
       return lastValue;
    }
-   // Fetch volumes based on volume type (tick or real)
+// Fetch volumes based on volume type (tick or real)
    if(volumeType == VOLUME_TICK)
    {
       Vol0 = mqlRates[0].tick_volume;
@@ -356,13 +356,13 @@ double CIndicator::iPVI(const string symbol, const ENUM_TIMEFRAMES timeframe, co
       Vol1 = mqlRates[1].real_volume;
    }
 
-   // Calculate the new PVI value
+// Calculate the new PVI value
    if(Vol0 > Vol1)
    {
       lastValue = lastValue * (1 + ((mqlRates[0].close - mqlRates[1].close) / mqlRates[1].close));
    }
 
-   // Return the updated PVI value
+// Return the updated PVI value
    return lastValue;
 }
 //+------------------------------------------------------------------+
@@ -382,7 +382,7 @@ double CIndicator::iPVI(const string symbol, const ENUM_TIMEFRAMES timeframe, co
    {
       return lastValue;
    }
-   // Fetch volumes based on volume type (tick or real)
+// Fetch volumes based on volume type (tick or real)
    if(volumeType == VOLUME_TICK)
    {
       Vol0 = mqlRates[0].tick_volume;
@@ -394,13 +394,13 @@ double CIndicator::iPVI(const string symbol, const ENUM_TIMEFRAMES timeframe, co
       Vol1 = mqlRates[1].real_volume;
    }
 
-   // Calculate the new PVI value based on input data
+// Calculate the new PVI value based on input data
    if(Vol0 > Vol1)
    {
       lastValue = lastValue * (1 + ((closeData[shift] - closeData[shift + 1]) / closeData[shift + 1]));
    }
 
-   // Return the updated PVI value
+// Return the updated PVI value
    return lastValue;
 }
 //+------------------------------------------------------------------+
@@ -464,7 +464,7 @@ double CIndicator:: iMA(const string symbol, const ENUM_TIMEFRAMES timeframe, co
    {
       this.temp.handle = ::iMA(symbol, timeframe, maPeriod, maShift, maMethod, appliedPriceOrHandle);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set Moving Average.");
 
@@ -500,7 +500,7 @@ double CIndicator::iRSI(const string symbol, const ENUM_TIMEFRAMES timeframe, co
    {
       this.temp.handle = ::iRSI(symbol, timeframe, rsiPeriod, appliedPriceOrHandle);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set RSI");
          return EMPTY_VALUE;
@@ -537,7 +537,7 @@ double CIndicator::iBullsPower(const string symbol, const ENUM_TIMEFRAMES timefr
    {
       this.temp.handle = ::iBullsPower(symbol, timeframe, bullPeriod);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set Bulls Power");
          return EMPTY_VALUE;
@@ -574,7 +574,7 @@ double CIndicator::iBearsPower(const string symbol, const ENUM_TIMEFRAMES timefr
    {
       this.temp.handle = ::iBearsPower(symbol, timeframe, bearPeriod);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set Bears Power");
          return EMPTY_VALUE;
@@ -611,7 +611,7 @@ double CIndicator::iWPR(const string symbol, const ENUM_TIMEFRAMES timeframe, co
    {
       this.temp.handle = ::iWPR(symbol, timeframe, wprPeriod);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set Larry Williams' Percent Range.");
          return EMPTY_VALUE;
@@ -648,7 +648,7 @@ double CIndicator::iMomentum(const string symbol, const ENUM_TIMEFRAMES timefram
    {
       this.temp.handle = ::iMomentum(symbol, timeframe, momemtumPeriod, appliedPrice);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set Momemtum");
          return EMPTY_VALUE;
@@ -685,7 +685,7 @@ double CIndicator::iAO(const string symbol, const ENUM_TIMEFRAMES timeframe, con
    {
       this.temp.handle = ::iAO(symbol, timeframe);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set Awesome Oscillator");
          return EMPTY_VALUE;
@@ -722,7 +722,7 @@ double CIndicator::iFractals(const string symbol, const ENUM_TIMEFRAMES timefram
    {
       this.temp.handle = ::iFractals(symbol, timeframe);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set Fractals");
          return EMPTY_VALUE;
@@ -759,7 +759,7 @@ double CIndicator::iATR(const string symbol, const ENUM_TIMEFRAMES timeframe, co
    {
       this.temp.handle = ::iATR(symbol, timeframe, atrPeriod);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set ATR");
          return EMPTY_VALUE;
@@ -798,7 +798,7 @@ double CIndicator::iADX(const string symbol, const ENUM_TIMEFRAMES timeframe, co
    {
       this.temp.handle = ::iADX(symbol, timeframe, adxPeriod);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set ADX.");
 
@@ -836,7 +836,7 @@ double CIndicator::iStochastic(const string symbol, const ENUM_TIMEFRAMES timefr
    {
       this.temp.handle = ::iStochastic(symbol, timeframe, kPeriod, dPeriod, slowPeriod, maMethod, stoPrice);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set Stochastic.");
 
@@ -876,7 +876,7 @@ double CIndicator::iCCI(const string symbol, const ENUM_TIMEFRAMES timeframe, co
    {
       this.temp.handle = ::iCCI(symbol, timeframe, cciPeriod, appliedPrice);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set CCI");
          return EMPTY_VALUE;
@@ -913,7 +913,7 @@ double CIndicator::iCustom(const string symbol, const ENUM_TIMEFRAMES timeframe,
    {
       this.temp.handle = ::iCustom(symbol, timeframe, "\\Indicators\\" + indicatorAndFolderNameOnly + ".ex5");
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Alert("Failed to set ", indicatorAndFolderNameOnly);
 
@@ -951,7 +951,7 @@ double CIndicator::iEnvelopes(const string symbol, const ENUM_TIMEFRAMES timefra
    {
       this.temp.handle = ::iEnvelopes(symbol, timeframe, envPeriod, maShift, envMethod, appliedPriceOrHandle, envDeviation);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set Envelopes.");
 
@@ -989,7 +989,7 @@ double CIndicator::iMACD(const string symbol, const ENUM_TIMEFRAMES timeframe, c
    {
       this.temp.handle = ::iMACD(symbol, timeframe, fastPeriod, slowPeriod, signalPeriod, appliedPrice);
 
-      if(this.temp.handle == EMPTY_VALUE)
+      if(this.temp.handle == INVALID_HANDLE)
       {
          ::Print("Failed to set MACD.");
 
