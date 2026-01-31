@@ -1,11 +1,11 @@
 //+------------------------------------------------------------------+
 //|                                                 ZigZag-HH-LL.mq5 |
-//|                                     Copyright 2023-2025,JBlanked |
+//|                                     Copyright 2023-2026,JBlanked |
 //|                                        https://www.jblanked.com/ |
 //+------------------------------------------------------------------+
-#property copyright "Copyright 2023-2025,JBlanked"
+#property copyright "Copyright 2023-2026,JBlanked"
 #property link      "https://www.jblanked.com/"
-#property version   "1.06"
+#property version   "1.07"
 #property indicator_chart_window
 #property strict
 //---- includes
@@ -29,9 +29,6 @@
 #property indicator_color1 clrOrange
 #property indicator_style1 STYLE_SOLID
 #property indicator_width1 2
-//---- definitions
-#define CANDLE_MAX 500 // maximum bars to calculate for
-#define RECOUNT 50     // re-calculate the last x bars
 //---- inputs
 input int      ExtDepth           = 5 ; // Depth
 input int      ExtDeviation       = 0 ; // Deviation

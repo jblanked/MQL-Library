@@ -1,5 +1,5 @@
 ### ZigZag-HH-LL
-2025 optimized version of the infamous ZigZag indicator.
+2026 optimized version of the infamous ZigZag indicator.
 
 ### Getting Started
 To use this indicator:

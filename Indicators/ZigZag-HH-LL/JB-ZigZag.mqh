@@ -1,41 +1,48 @@
 //+------------------------------------------------------------------+
 //|                                                    JB-ZigZag.mqh |
-//|                                 Copyright 2024-2025,JBlanked LLC |
+//|                                 Copyright 2024-2026,JBlanked LLC |
 //|                          https://www.jblanked.com/trading-tools/ |
 //+------------------------------------------------------------------+
-#property copyright "Copyright 2024-2025,JBlanked LLC"
+#property copyright "Copyright 2024-2026,JBlanked LLC"
 #property link      "https://www.jblanked.com/trading-tools/"
 #property description "Modification of the infamous ZigZag indicator, optimized by JBlanked"
 #property strict
+
+#define CANDLE_MAX 500 // maximum bars to calculate for
+#define RECOUNT 50     // re-calculate the last x bars
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
 class CZigZag
 {
 public:
    double            ZigZagBuffer[];
    double            HH[], LH[], HL[], LL[];
    //
-                     CZigZag(
+   CZigZag(
       string symbol,
       ENUM_TIMEFRAMES timeframe = PERIOD_CURRENT,
       bool draw = false,
       int depth = 5,
       int deviation = 0,
       int backstep = 0,
-      int max_count = 500,
-      int recount = 50
+      int max_count = CANDLE_MAX,
+      int recount = RECOUNT
    ) :               m_symbol(symbol), m_timeframe(timeframe), m_depth(depth),
-                     m_deviation(deviation), m_backstep(backstep), m_max_count(max_count),
-                     m_recount(recount), m_draw(draw), is_set(false),
-                     tag("CZigZag(" + string(depth) + "," + string(deviation) + "," + string(backstep) + ")")
+      m_deviation(deviation), m_backstep(backstep), m_max_count(max_count),
+      m_recount(recount), m_draw(draw), is_set(false),
+      tag("CZigZag(" + string(depth) + "," + string(deviation) + "," + string(backstep) + ")")
    {
       // nothing to do for now
    };
 
-                    ~CZigZag()
+   ~CZigZag()
    {
       if(this.m_draw) ObjectsDeleteAll(0, this.tag);
    }
 
-   void              run(int limit);
+   bool              run(int limit);
 protected:
    string            m_symbol;
    ENUM_TIMEFRAMES   m_timeframe;
@@ -57,7 +64,7 @@ private:
    void              drawLabel(int shift, bool high);
    bool              objectSetText(string name, string text, int font_size, string font = "", color text_color = clrNONE);
    void              removeLabel(int shift);
-   void              set_as_series();
+   bool              set_as_series(int limit = -1);
 };
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -169,11 +176,16 @@ void CZigZag::removeLabel(int shift)
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
-void CZigZag::run(int limit)
+bool CZigZag::run(int limit)
 {
-   if(!this.is_set) this.set_as_series();
-
-   if((limit - 1) >= this.arr_size) return;
+   if(limit >= this.arr_size || !this.is_set)
+   {
+      if(!this.set_as_series(limit))
+      {
+         Print("[CZigZag]: Failed to set arrays");
+         return false;
+      }
+   }
 
 //--- refresh values
    for (int i = (this.m_max_count - 1); i >= 0; i--)
@@ -357,13 +369,14 @@ void CZigZag::run(int limit)
          break;
       }
    }
+   return true;
 }
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
-void CZigZag::set_as_series(void)
+bool CZigZag::set_as_series(int limit = -1)
 {
-   const int maxi = MathMin(Bars(this.m_symbol, this.m_timeframe) - this.m_depth, this.m_max_count) + 3;
+   const int maxi = limit == -1 ? MathMin(Bars(this.m_symbol, this.m_timeframe) - this.m_depth, this.m_max_count) + 3 : limit + 1;
 
    ArrayInitialize(ZigZagBuffer, EMPTY_VALUE);
    ArrayInitialize(HH, EMPTY_VALUE);
@@ -390,5 +403,6 @@ void CZigZag::set_as_series(void)
    ArrayResize(LowMapBuffer, maxi);
 
    this.is_set = arr_size != -1;
+   return arr_size != -1;
 }
 //+------------------------------------------------------------------+
