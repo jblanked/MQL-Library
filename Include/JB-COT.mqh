@@ -6,8 +6,8 @@
 #property copyright "Copyright 2024,JBlanked"
 #property link      "https://www.jblanked.com/"
 #property description "class to read and parse COT data provided by cftc.gov"
-#include <download.mqh>     // https://github.com/jblanked/MQL-Library/blob/main/Download.mqh
-#include <jb-array.mqh>     // https://github.com/jblanked/MQL-Library/blob/main/JB-Array.mqh
+#include "download.mqh"     // https://github.com/jblanked/MQL-Library/blob/main/Download.mqh
+#include "jb-array.mqh"     // https://github.com/jblanked/MQL-Library/blob/main/JB-Array.mqh
 
 // include COT-Save file as resource in case GET request fails
 #resource "\\Include\\COT-Save.txt" as string COTSaveFile

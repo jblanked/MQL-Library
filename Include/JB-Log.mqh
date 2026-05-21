@@ -5,9 +5,9 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2024,JBlanked"
 #property link      "https://www.jblanked.com/"
-#include <panel-draw.mqh>
-#include <jb-cache.mqh>
-#include <jb-array.mqh>
+#include "panel-draw.mqh"
+#include "jb-cache.mqh"
+#include "jb-array.mqh"
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+

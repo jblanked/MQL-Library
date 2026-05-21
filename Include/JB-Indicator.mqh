@@ -7,7 +7,7 @@
 #property link      "https://www.jblanked.com/"
 #property strict
 //--- Last Updated: December 7th, 2025
-#include <jb-array.mqh> // download from https://github.com/jblanked/MQL-Library/blob/main/Include/JB-Array.mqh
+#include "jb-array.mqh" // download from https://github.com/jblanked/MQL-Library/blob/main/Include/JB-Array.mqh
 
 #ifdef __MQL4__ enum ENUM_APPLIED_VOLUME { VOLUME_TICK, VOLUME_REAL };
 #else

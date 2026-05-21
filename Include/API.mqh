@@ -79,11 +79,11 @@ int InternetReadFile(int, string, int, int& OneInt[]);
 int ShellExecuteW(int hwnd, string lpOperation, string lpFile, string lpParameters, string lpDirectory, int nShowCmd);
 #import
 
-#include <jason_with_search.mqh>
+#include "jason_with_search.mqh"
 #ifdef __MQL5__
-#include <errordescription.mqh>
+#include "errordescription.mqh"
 #endif
-#include <websocket.mqh>
+#include "websocket.mqh"
 CWebsocket sock;
 
 //+------------------------------------------------------------------+

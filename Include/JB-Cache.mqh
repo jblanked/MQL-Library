@@ -5,9 +5,12 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2024-2026,JBlanked"
 #property link      "https://www.jblanked.com/"
-#include <jb-json.mqh>
-#include <jb-time.mqh>
+#property strict
+#include "jb-json.mqh"
+#include "jb-time.mqh"
+#ifndef None
 #define None NULL
+#endif
 
 /* ---- Examples
 
