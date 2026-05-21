@@ -10,6 +10,26 @@
 #ifndef JBARRAY_H
 #define JBARRAY_H 1
 
+#ifdef __MQL4__
+template<typename T>
+void ArraySwap(T &first[], T &second[])
+{
+   T firstCopy[];
+   T secondCopy[];
+
+   ArrayResize(firstCopy, ArraySize(first));
+   ArrayResize(secondCopy, ArraySize(second));
+   ArrayCopy(firstCopy, first);
+   ArrayCopy(secondCopy, second);
+
+   ArrayResize(first, ArraySize(secondCopy));
+   ArrayResize(second, ArraySize(firstCopy));
+
+   ArrayCopy(first, secondCopy);
+   ArrayCopy(second, firstCopy);
+}
+#endif
+
 template<typename LT>
 class CJBListObject
 {
