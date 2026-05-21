@@ -7,6 +7,9 @@
 #property link      "https://www.jblanked.com/"
 #property strict
 
+#ifndef JBARRAY_H
+#define JBARRAY_H 1
+
 template<typename LT>
 class CJBListObject
 {
@@ -644,3 +647,4 @@ void CJBArray::Append_Current_Symbols_To_list(string & Array[])
    }
 }
 //+------------------------------------------------------------------+
+#endif
