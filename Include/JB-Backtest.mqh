@@ -56,6 +56,8 @@ public:
    CBacktest(const testerInputs & inputs);
 
    template <typename T>
+   void              addOptimizationSetting(const string inputVariable, T value, T valueStart, T valueStep, T valueStop, const bool checked = false);
+   template <typename T>
    void              addSetting(const string inputVariable, T tempValue);
    bool              ask(
       const bool openFolder = false,
@@ -171,6 +173,24 @@ CBacktest::CBacktest(const testerInputs & inputs)
                      "ExecutionMode=" + string(this.i_settings.executionMode) + "\n" +
                      "OptimizationCriterion=" + string(this.i_settings.optimizationCriterion) + "\n" +
                      "Visual=" + string(this.i_settings.visual) + "\n";
+}
+
+//+------------------------------------------------------------------+
+//| Add an input to the testing config for optimizations             |
+//+------------------------------------------------------------------+
+template <typename T>
+void              CBacktest::addOptimizationSetting(const string inputVariable, T value, T valueStart, T valueStep, T valueStop, const bool checked = false)
+{
+   static bool inputsAdded = false;
+   if(inputsAdded)
+   {
+      this.m_settings += "\n[TesterInputs]";
+      inputsAdded = true;
+   }
+
+   const string _setting = StringFormat("%s||%s||%s||%s||%s", (string)value, (string)valueStart, (string)valueStop, checked ? "Y" : "N");
+   MTTESTER::SetValue(this.m_settings, inputVariable, _setting);
+   MTTESTER::SetValue(this.s_settings, inputVariable, _setting);
 }
 
 //+------------------------------------------------------------------+
