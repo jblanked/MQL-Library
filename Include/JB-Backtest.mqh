@@ -8,6 +8,14 @@
 #property description "Extension of FXSaber's MTTester"
 #property strict
 
+/*
+   Features:
+      - automatically creates .ini and .set files
+      - simplifies the creation of settings
+      - returns strategy tester results
+*/
+
+#include "fxsaber\Expert.mqh"                              // https://www.mql5.com/en/code/19003
 #include "fxsaber\MultiTester\MTTester.mqh"                // https://www.mql5.com/ru/code/26132
 #include "fxsaber\SingleTesterCache\SingleTesterCache.mqh" // https://www.mql5.com/ru/code/27611
 
@@ -15,30 +23,57 @@
 int ShellExecuteW(int hWnd, string lpOperation, string lpFile, string lpParameters, string lpDirectory, int nShowCmd);
 #import
 
-/*
-   Features:
-      - automatically creates .ini and .set files
-      - simplifies the creation of settings
-      - returns results
-*/
-
 struct testerInputs
 {
    string            expertName;
    string            symbol;
    ENUM_TIMEFRAMES   timeFrame;
-   int               optimization;
-   int               model;
+   bool              optimization; // true to run optimization, otherwise run single-test
+   int               model; // 0 — "Every tick", 1 — "1 minute OHLC", 2 — "Open price only", 3 — "Math calculations", 4 — "Every tick based on real ticks"
    datetime          fromDate;
    datetime          toDate;
    int               forwardMode;
    double            deposit;
    string            currency;
-   int               profitInPips;
+   bool              profitInPips;
    long              leverage;
    int               executionMode;
    int               optimizationCriterion;
-   int               visual;
+   bool              visual;
+
+   testerInputs::testerInputs()
+   {
+      expertName            = "";
+      symbol                = _Symbol;
+      timeFrame             = PERIOD_CURRENT;
+      optimization          = false;
+      model                 = 0;
+      fromDate              = iTime(_Symbol, PERIOD_MN1, 0);
+      toDate                = TimeCurrent();
+      forwardMode           = 0;
+      deposit               = AccountInfoDouble(ACCOUNT_EQUITY);
+      currency              = AccountInfoString(ACCOUNT_CURRENCY);
+      profitInPips          = false;
+      leverage              = AccountInfoInteger(ACCOUNT_LEVERAGE);
+      executionMode         = 27;
+      optimizationCriterion = 3;
+      visual                = false;
+   }
+};
+
+struct MqlParamInput
+{
+   double            double_value;  // field to store a double type
+   long              integer_value; // field to store an integer type
+   string            name;          // name of the input parameter
+   string            string_value;  // field to store a string type
+   ENUM_DATATYPE     type;          // type of the input parameter, value of ENUM_DATATYPE
+};
+
+struct InputParam
+{
+   string name;
+   string value;
 };
 
 //+------------------------------------------------------------------+
@@ -48,12 +83,11 @@ class CBacktest
 {
 protected:
    string            m_settings;
-   string            s_settings;
    testerInputs      i_settings;
 
 public:
-   CBacktest(const string expertName, const string symbol, const ENUM_TIMEFRAMES timeFrame);
-   CBacktest(const testerInputs & inputs);
+   CBacktest(const string expertName, string symbol = "", const ENUM_TIMEFRAMES timeFrame = PERIOD_CURRENT, bool loadDefaultParameters = true);
+   CBacktest(const testerInputs&inputs, bool loadDefaultParameters = true);
 
    template <typename T>
    void              addOptimizationSetting(const string inputVariable, T value, T valueStart, T valueStep, T valueStop, const bool checked = false);
@@ -67,6 +101,7 @@ public:
    bool              closeOtherCharts(void);
    string            doubleToString(const double doubleValue, const int digits = 2);
    datetime          endDate(void);
+   int               getParameters(const string pathToExpert, MqlParamInput &params[]);
    datetime          monthCurrent(void);
    void              openFolder(void);
    string            run(const bool openFolder = false, const bool removeTool = false);
@@ -75,20 +110,52 @@ public:
    string            timeframeSuffix(const ENUM_TIMEFRAMES timeframe);
 
 private:
-   int               fileHandle;
+   bool              committed;
+   uint              count;
    string            iniFileName;
    string            setFileName;
+   InputParam        inputParams[];
+   bool              inputsAdded;
 
-   testerInputs      check(const testerInputs & inputs);
-   template <typename T>
-   bool              isEmpty(const T & value);
+   void              loadDefaultParams();
+   void              set(const string expertName, const string symbol, const ENUM_TIMEFRAMES timeFrame);
+   string            testerInputsToString(const testerInputs &inputs);
+   bool              stringToTesterInputs(const string testerInputString, testerInputs &inputs);
+   ENUM_TIMEFRAMES   stringToTimeframe(string timeframeStr);
 };
 
 //+------------------------------------------------------------------+
-//| Constructor                                                      |
+//| Constructor (used for single tests)                              |
 //+------------------------------------------------------------------+
-CBacktest::CBacktest(const string expertName, const string symbol, const ENUM_TIMEFRAMES timeFrame)
+CBacktest::CBacktest(const string expertName, string symbol, const ENUM_TIMEFRAMES timeFrame, bool loadDefaultParameters)
 {
+   if(expertName == "")
+   {
+      Alert("Expert name cannot be empty!");
+      return;
+   }
+
+   if(StringFind(expertName, "Expert") != 0)
+   {
+      Alert("\"expertName\" must start with \"Expert//\"");
+      return;
+   }
+
+#ifdef __MQL5__
+   if(StringFind(expertName, ".ex5", StringLen(expertName) - 5) == -1)
+   {
+      Alert("\"expertName\" must end with \".ex5\"");
+      return;
+   }
+#else
+   if(StringFind(expertName, ".ex4", StringLen(expertName) - 5) == -1)
+   {
+      Alert("\"expertName\" must end with \".ex4\"");
+      return;
+   }
+#endif
+
+   symbol = symbol == "" ? _Symbol : symbol;
 
    this.iniFileName = "backtest\\" + expertName + "-" +
                       symbol + "-" +
@@ -102,77 +169,45 @@ CBacktest::CBacktest(const string expertName, const string symbol, const ENUM_TI
                       this.timeCurrent() +
                       ".set";
 
-   this.s_settings = "";
-   this.m_settings = "[Tester]\n" +
-                     "Expert=" + expertName + "\n" +
-                     "Symbol=" + symbol + "\n" +
-                     "Period=" + this.timeframeSuffix(timeFrame) + "\n" +
-                     "Optimization=0\n" +
-                     "Model=0\n" + // 0 — "Every tick", 1 — "1 minute OHLC", 2 — "Open price only", 3 — "Math calculations", 4 — "Every tick based on real ticks"
-                     "FromDate=" + TimeToString(this.monthCurrent(), TIME_DATE) + "\n" +
-                     "ToDate=" + TimeToString(TimeCurrent(), TIME_DATE) + "\n" +
-                     "ForwardMode=0\n" +
-                     "Deposit=" + this.doubleToString(AccountInfoDouble(ACCOUNT_BALANCE)) + "\n" +
-                     "Currency=" + AccountInfoString(ACCOUNT_CURRENCY) + "\n" +
-                     "ProfitInPips=0\n" +
-                     "Leverage=" + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + "\n" +
-                     "ExecutionMode=27\n" +
-                     "OptimizationCriterion=3\n" +
-                     "Visual=0\n";
+   this.i_settings.expertName = expertName;
+   this.i_settings.symbol = symbol;
+   this.i_settings.timeFrame = timeFrame;
 
-   this.i_settings.currency               = AccountInfoString(ACCOUNT_CURRENCY);
-   this.i_settings.deposit                = AccountInfoDouble(ACCOUNT_BALANCE);
-   this.i_settings.executionMode          = 27;
-   this.i_settings.expertName             = expertName;
-   this.i_settings.forwardMode            = false;
-   this.i_settings.fromDate               = this.monthCurrent();
-   this.i_settings.leverage               = AccountInfoInteger(ACCOUNT_LEVERAGE);
-   this.i_settings.model                  = 0;
-   this.i_settings.optimization           = false;
-   this.i_settings.optimizationCriterion  = 3;
-   this.i_settings.profitInPips           = false;
-   this.i_settings.symbol                 = symbol;
-   this.i_settings.timeFrame              = timeFrame;
-   this.i_settings.toDate                 = (datetime)TimeToString(TimeCurrent(), TIME_DATE);
-   this.i_settings.visual                 = false;
+   if(loadDefaultParameters)
+   {
+      this.loadDefaultParams();
+   }
 }
 
 //+------------------------------------------------------------------+
-//| Constructor                                                      |
+//| Constructor (best used for custom single tests, msot cases)      |
 //+------------------------------------------------------------------+
-CBacktest::CBacktest(const testerInputs & inputs)
+CBacktest::CBacktest(const testerInputs &inputs, bool loadDefaultParameters)
 {
-   this.i_settings = this.check(inputs);
+   if(inputs.expertName == "")
+   {
+      Alert("Expert name cannot be empty!");
+      return;
+   }
 
-   this.iniFileName = "backtest\\" + i_settings.expertName + "-" +
-                      i_settings.symbol + "-" +
-                      this.timeframeSuffix(i_settings.timeFrame) + "-" +
+   this.i_settings = inputs;
+
+   this.iniFileName = "backtest\\" + inputs.expertName + "-" +
+                      inputs.symbol + "-" +
+                      this.timeframeSuffix(inputs.timeFrame) + "-" +
                       this.timeCurrent() +
                       ".ini";
 
-   this.setFileName = "backtest\\" + i_settings.expertName + "-" +
-                      i_settings.symbol + "-" +
-                      this.timeframeSuffix(i_settings.timeFrame) + "-" +
+   this.setFileName = "backtest\\" + inputs.expertName + "-" +
+                      inputs.symbol + "-" +
+                      this.timeframeSuffix(inputs.timeFrame) + "-" +
                       this.timeCurrent() +
                       ".set";
 
-   this.s_settings = "";
-   this.m_settings = "[Tester]\n" +
-                     "Expert=" + this.i_settings.expertName + "\n" +
-                     "Symbol=" + this.i_settings.symbol + "\n" +
-                     "Period=" + this.timeframeSuffix(this.i_settings.timeFrame) + "\n" +
-                     "Optimization=" + string(this.i_settings.optimization) + "\n" +
-                     "Model=" + string(this.i_settings.model) + "\n" +
-                     "FromDate=" + TimeToString(this.i_settings.fromDate, TIME_DATE) + "\n" +
-                     "ToDate=" + TimeToString(this.i_settings.toDate, TIME_DATE) + "\n" +
-                     "ForwardMode=" + string(this.i_settings.forwardMode) + "\n" +
-                     "Deposit=" + this.doubleToString(this.i_settings.deposit) + "\n" +
-                     "Currency=" + this.i_settings.currency + "\n" +
-                     "ProfitInPips=" + string(this.i_settings.profitInPips) + "\n" +
-                     "Leverage=" + IntegerToString(this.i_settings.leverage) + "\n" +
-                     "ExecutionMode=" + string(this.i_settings.executionMode) + "\n" +
-                     "OptimizationCriterion=" + string(this.i_settings.optimizationCriterion) + "\n" +
-                     "Visual=" + string(this.i_settings.visual) + "\n";
+   if(loadDefaultParameters)
+   {
+      this.loadDefaultParams();
+   }
 }
 
 //+------------------------------------------------------------------+
@@ -181,16 +216,31 @@ CBacktest::CBacktest(const testerInputs & inputs)
 template <typename T>
 void              CBacktest::addOptimizationSetting(const string inputVariable, T value, T valueStart, T valueStep, T valueStop, const bool checked = false)
 {
-   static bool inputsAdded = false;
-   if(inputsAdded)
+   if(!inputsAdded)
    {
-      this.m_settings += "\n[TesterInputs]";
+      this.m_settings += "[TesterInputs]";
       inputsAdded = true;
    }
 
-   const string _setting = StringFormat("%s||%s||%s||%s||%s", (string)value, (string)valueStart, (string)valueStop, checked ? "Y" : "N");
-   MTTESTER::SetValue(this.m_settings, inputVariable, _setting);
-   MTTESTER::SetValue(this.s_settings, inputVariable, _setting);
+   const int prevSize = ArraySize(this.inputParams);
+   for(int i = 0; i < prevSize; i++)
+   {
+      if(this.inputParams[i].name == inputVariable)
+      {
+         this.inputParams[i].value = (string)tempValue;
+         return;
+      }
+   }
+
+   const int newSize = ArrayResize(this.inputParams, prevSize + 1);
+   if(newSize == -1)
+   {
+      PrintFormat("Failed to increase input parameter array size to %d, error = %d", prevSize + 1, GetLastError());
+      return;
+   }
+
+   this.inputParams[newSize - 1].name  = inputVariable;
+   this.inputParams[newSize - 1].value = StringFormat("%s||%s||%s||%s||%s", (string)value, (string)valueStart, (string)valueStop, checked ? "Y" : "N");
 }
 
 //+------------------------------------------------------------------+
@@ -199,15 +249,31 @@ void              CBacktest::addOptimizationSetting(const string inputVariable, 
 template <typename T>
 void              CBacktest::addSetting(const string inputVariable, T tempValue)
 {
-   static bool inputsAdded = false;
-   if(inputsAdded)
+   if(!inputsAdded)
    {
-      this.m_settings += "\n[TesterInputs]";
+      this.m_settings += "[TesterInputs]";
       inputsAdded = true;
    }
 
-   MTTESTER::SetValue(this.m_settings, inputVariable, (string)tempValue);
-   MTTESTER::SetValue(this.s_settings, inputVariable, (string)tempValue);
+   const int prevSize = ArraySize(this.inputParams);
+   for(int i = 0; i < prevSize; i++)
+   {
+      if(this.inputParams[i].name == inputVariable)
+      {
+         this.inputParams[i].value = (string)tempValue;
+         return;
+      }
+   }
+
+   const int newSize = ArrayResize(this.inputParams, prevSize + 1);
+   if(newSize == -1)
+   {
+      PrintFormat("Failed to increase input parameter array size to %d, error = %d", prevSize + 1, GetLastError());
+      return;
+   }
+
+   this.inputParams[newSize - 1].name  = inputVariable;
+   this.inputParams[newSize - 1].value = (string)tempValue;
 }
 
 //+------------------------------------------------------------------+
@@ -226,32 +292,6 @@ bool              CBacktest::ask(
    }
    return false;
 }
-
-//+------------------------------------------------------------------+
-//| Get fully set testerInputs struct                                |
-//+------------------------------------------------------------------+
-testerInputs      CBacktest::check(const testerInputs & inputs)
-{
-   testerInputs temp;
-
-   temp.expertName            = inputs.expertName; // cant be empty
-   temp.symbol                = this.isEmpty(inputs.symbol) ? _Symbol :  inputs.symbol;
-   temp.timeFrame             = this.isEmpty(inputs.timeFrame) ? PERIOD_CURRENT : inputs.timeFrame;
-   temp.optimization          = this.isEmpty(inputs.optimization) ? false : inputs.optimization;
-   temp.model                 = this.isEmpty(inputs.model) ? 0 : inputs.model;
-   temp.fromDate              = this.isEmpty(inputs.fromDate) ? this.monthCurrent() : inputs.fromDate;
-   temp.toDate                = this.isEmpty(inputs.toDate) ? (datetime)TimeToString(TimeCurrent(), TIME_DATE) : inputs.toDate;
-   temp.forwardMode           = this.isEmpty(inputs.forwardMode) ? false : inputs.forwardMode;
-   temp.deposit               = this.isEmpty(inputs.deposit) ? AccountInfoDouble(ACCOUNT_BALANCE) : inputs.deposit;
-   temp.currency              = this.isEmpty(inputs.currency) ? AccountInfoString(ACCOUNT_CURRENCY) :  inputs.currency;
-   temp.profitInPips          = this.isEmpty(inputs.profitInPips) ? false : inputs.profitInPips;
-   temp.leverage              = this.isEmpty(inputs.leverage) ? AccountInfoInteger(ACCOUNT_LEVERAGE) : inputs.leverage;
-   temp.executionMode         = this.isEmpty(inputs.executionMode) ? 27 : inputs.executionMode;
-   temp.optimizationCriterion = this.isEmpty(inputs.optimizationCriterion) ? 3 : inputs.optimizationCriterion;
-   temp.visual                = this.isEmpty(inputs.visual) ? false : inputs.visual;
-   return temp;
-}
-
 //+------------------------------------------------------------------+
 //| Close all charts except the current                              |
 //+------------------------------------------------------------------+
@@ -281,7 +321,101 @@ string            CBacktest::doubleToString(const double doubleValue, const int 
 //+------------------------------------------------------------------+
 datetime          CBacktest::endDate(void)
 {
-   return (MTTESTER::GetSettings(this.m_settings) ? (datetime)MTTESTER::GetValue(this.m_settings, "ToDate") : 0);
+   string currentSettings = testerInputsToString(this.i_settings);
+   return (MTTESTER::GetSettings(currentSettings) ? (datetime)MTTESTER::GetValue(currentSettings, "ToDate") : 0);
+}
+
+//+------------------------------------------------------------------+
+//| Get parameters from an expert advisor                            |
+//+------------------------------------------------------------------+
+int               CBacktest::getParameters(const string pathToExpert, MqlParamInput &params[])
+{
+   long nextChartId = ChartNext(ChartID());
+   while(nextChartId != -1)
+   {
+      long nextChartId = ChartNext(ChartID());
+   }
+   if(nextChartId != -1) // last chart
+   {
+      Print("Failed to get last chart..");
+   }
+   nextChartId = ChartOpen(this.i_settings.symbol, this.i_settings.timeFrame);
+   if(nextChartId == 0)
+   {
+      PrintFormat("ChartOpen() failed, Error %d", GetLastError());
+      return 0;
+   }
+   MqlParam expertParams[1];
+   expertParams[0].string_value = pathToExpert;
+   if(!EXPERT::Run(nextChartId, expertParams))
+   {
+      PrintFormat("Failed to load %s on chart %d", pathToExpert, nextChartId);
+      ChartClose(nextChartId);
+      return 0;
+   }
+   string inputNames[];
+   MqlParam parameters[];
+   if(!EXPERT::Parameters(nextChartId, parameters, inputNames))
+   {
+      PrintFormat("Failed to get parameters for %s on chart %d", pathToExpert, nextChartId);
+      ChartClose(nextChartId);
+      return 0;
+   }
+   ArrayResize(params, ArraySize(inputNames));
+   for(int i = 1; i < ArraySize(parameters); i++)
+   {
+      // skip expert name (i == 0)
+      params[i - 1].double_value  = parameters[i].double_value;
+      params[i - 1].integer_value = parameters[i].integer_value;
+      params[i - 1].name          = inputNames[i - 1];
+      params[i - 1].string_value  = parameters[i].string_value;
+      params[i - 1].type          = parameters[i].type;
+   }
+   if(!EXPERT::Remove(nextChartId))
+   {
+      PrintFormat("Failed to remove %s from chart %d", pathToExpert, nextChartId);
+   }
+   ChartClose(nextChartId);
+   return ArraySize(params);
+}
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void              CBacktest::loadDefaultParams(void)
+{
+   MqlParamInput inputs[];
+   const int paramCount = this.getParameters(this.i_settings.expertName, inputs);
+   for(int i = 0; i < paramCount; i++)
+   {
+      switch(inputs[i].type)
+      {
+      case TYPE_STRING:
+         this.addSetting(inputs[i].name, inputs[i].string_value);
+         break;
+      case TYPE_DOUBLE:
+      case TYPE_FLOAT:
+         inputs[i].string_value = (string)inputs[i].double_value;
+         this.addSetting(inputs[i].name, inputs[i].double_value);
+         break;
+      case TYPE_INT:
+         inputs[i].string_value = (string)inputs[i].integer_value;
+         this.addSetting(inputs[i].name, inputs[i].integer_value);
+         break;
+      case TYPE_BOOL:
+         inputs[i].string_value = (string)inputs[i].integer_value;
+         this.addSetting(inputs[i].name, (bool)inputs[i].integer_value);
+         break;
+      case TYPE_DATETIME:
+         inputs[i].string_value = (string)inputs[i].integer_value;
+         this.addSetting(inputs[i].name, (datetime)inputs[i].integer_value);
+         break;
+      default:
+         inputs[i].string_value = (string)inputs[i].integer_value;
+         this.addSetting(inputs[i].name, inputs[i].integer_value);
+         break;
+      };
+   }
 }
 
 //+------------------------------------------------------------------+
@@ -290,15 +424,6 @@ datetime          CBacktest::endDate(void)
 datetime          CBacktest::monthCurrent(void)
 {
    return iTime(_Symbol, PERIOD_MN1, 0);
-}
-
-//+------------------------------------------------------------------+
-//| Check if a value is empty                                        |
-//+------------------------------------------------------------------+
-template <typename T>
-bool              CBacktest::isEmpty(const T & value)
-{
-   return value == NULL || (string)value == "" || (int)value == 0 || (double)value == EMPTY_VALUE;
 }
 
 //+------------------------------------------------------------------+
@@ -321,7 +446,14 @@ void              CBacktest::openFolder(void)
 //+------------------------------------------------------------------+
 string              CBacktest::run(const bool openFolder = false, const bool removeTool = false)
 {
-   MTTESTER::SetSettings2(this.m_settings);
+   if(!this.committed)
+   {
+      for(int i = 0; i < ArraySize(this.inputParams); i++)
+         MTTESTER::SetValue(this.m_settings, this.inputParams[i].name, this.inputParams[i].value);
+      this.committed = true;
+   }
+
+   MTTESTER::SetSettings2(testerInputsToString(this.i_settings) + this.m_settings);
    this.save();
    MTTESTER::ClickStart();
 
@@ -363,13 +495,186 @@ string              CBacktest::run(const bool openFolder = false, const bool rem
 //+------------------------------------------------------------------+
 void              CBacktest::save(void)
 {
-   this.fileHandle = FileOpen(this.iniFileName, FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_BIN);
-   FileWriteString(this.fileHandle, this.m_settings);
-   FileClose(this.fileHandle);
+   if(this.m_settings == "") return;
 
-   this.fileHandle = FileOpen(this.setFileName, FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_BIN);
-   FileWriteString(this.fileHandle, this.s_settings);
-   FileClose(this.fileHandle);
+   string testInputData = testerInputsToString(this.i_settings);
+
+   int fileHandle = FileOpen(this.iniFileName, FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_BIN);
+   FileWriteString(fileHandle, testInputData + this.m_settings);
+   FileClose(fileHandle);
+
+   int fileHandle2 = FileOpen(this.setFileName, FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_BIN);
+   string settingsCopy = testInputData + this.m_settings;
+   if(StringFind(this.m_settings, "[TesterInputs]") == 0)
+   {
+      settingsCopy = testInputData + StringSubstr(this.m_settings, StringLen("\n[TesterInputs]"));
+   }
+   FileWriteString(fileHandle2, settingsCopy);
+   FileClose(fileHandle2);
+}
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+ENUM_TIMEFRAMES            CBacktest::stringToTimeframe(string timeframeStr)
+{
+   if (StringFind(timeframeStr, "M10") != -1) return PERIOD_M10;
+   if (StringFind(timeframeStr, "M15") != -1) return PERIOD_M15;
+   if (StringFind(timeframeStr, "M20") != -1) return PERIOD_M20;
+   if (StringFind(timeframeStr, "M30") != -1) return PERIOD_M30;
+   if (StringFind(timeframeStr, "M1")  != -1) return PERIOD_M1;
+   if (StringFind(timeframeStr, "M2")  != -1) return PERIOD_M2;
+   if (StringFind(timeframeStr, "M3")  != -1) return PERIOD_M3;
+   if (StringFind(timeframeStr, "M4")  != -1) return PERIOD_M4;
+   if (StringFind(timeframeStr, "M5")  != -1) return PERIOD_M5;
+   if (StringFind(timeframeStr, "M6")  != -1) return PERIOD_M6;
+   if (StringFind(timeframeStr, "H12") != -1) return PERIOD_H12;
+   if (StringFind(timeframeStr, "H1")  != -1) return PERIOD_H1;
+   if (StringFind(timeframeStr, "H2")  != -1) return PERIOD_H2;
+   if (StringFind(timeframeStr, "H4")  != -1) return PERIOD_H4;
+   if (StringFind(timeframeStr, "H8")  != -1) return PERIOD_H8;
+   if (StringFind(timeframeStr, "D1")  != -1) return PERIOD_D1;
+   if (StringFind(timeframeStr, "W1")  != -1) return PERIOD_W1;
+   if (StringFind(timeframeStr, "MN1") != -1) return PERIOD_MN1;
+   return PERIOD_CURRENT;
+}
+
+//+------------------------------------------------------------------+
+//| Helper to convert testerInputs struct to string                  |
+//+------------------------------------------------------------------+
+string            CBacktest::testerInputsToString(const testerInputs &inputs)
+{
+   return StringFormat(
+             "[Tester]\n" +
+             "Expert=%s\n" +
+             "Symbol=%s\n" +
+             "Period=%s\n" +
+             "Optimization=%d\n" +
+             "Model=%d\n" +
+             "FromDate=%s\n" +
+             "ToDate=%s\n" +
+             "ForwardMode=%d\n" +
+             "Deposit=%g\n" +
+             "Currency=%s\n" +
+             "ProfitInPips=%d\n" +
+             "Leverage=%d\n" +
+             "ExecutionMode=%d\n" +
+             "OptimizationCriterion=%d\n" +
+             "Visual=%d\n",
+             inputs.expertName,
+             inputs.symbol,
+             this.timeframeSuffix(inputs.timeFrame),
+             inputs.optimization,
+             inputs.model,
+             TimeToString(inputs.fromDate, TIME_DATE),
+             TimeToString(inputs.toDate, TIME_DATE),
+             inputs.forwardMode,
+             inputs.deposit,
+             inputs.currency,
+             inputs.profitInPips,
+             inputs.leverage,
+             inputs.executionMode,
+             inputs.optimizationCriterion,
+             inputs.visual
+          );
+}
+
+//+------------------------------------------------------------------+
+//| Helper to convert a string to testerInputs struct                |
+//+------------------------------------------------------------------+
+bool              CBacktest::stringToTesterInputs(const string testerInputString, testerInputs &inputs)
+{
+   string listOfInputs[];
+   const int lines = StringSplit(testerInputString, '\n', listOfInputs);
+   if(lines < 1) return false;
+   for(int i = 0; i < lines; i++)
+   {
+      if(StringFind(listOfInputs[i], "Expert=") == 0)
+      {
+         inputs.expertName = StringSubstr(listOfInputs[i], StringLen("Expert="));
+      }
+      else if(StringFind(listOfInputs[i], "Symbol=") == 0)
+      {
+         inputs.symbol = StringSubstr(listOfInputs[i], StringLen("Symbol="));
+      }
+      else if(StringFind(listOfInputs[i], "Period=") == 0)
+      {
+         inputs.timeFrame = stringToTimeframe(StringSubstr(listOfInputs[i], StringLen("Period=")));
+      }
+      else if(StringFind(listOfInputs[i], "Optimization=") == 0)
+      {
+         const string res = StringSubstr(listOfInputs[i], StringLen("Optimization="));
+         if(res == "true" || res == "false" || res == "True" || res == "False")
+         {
+            inputs.optimization = (res == "true" || res == "True");
+         }
+         else
+         {
+            inputs.optimization = (bool)StringToInteger(res);
+         }
+      }
+      else if(StringFind(listOfInputs[i], "Model=") == 0)
+      {
+         inputs.model = (int)StringToInteger(StringSubstr(listOfInputs[i], StringLen("Model=")));
+      }
+      else if(StringFind(listOfInputs[i], "FromDate=") == 0)
+      {
+         inputs.fromDate = StringToTime(StringSubstr(listOfInputs[i], StringLen("FromDate=")));
+      }
+      else if(StringFind(listOfInputs[i], "ToDate=") == 0)
+      {
+         inputs.toDate = StringToTime(StringSubstr(listOfInputs[i], StringLen("ToDate=")));
+      }
+      else if(StringFind(listOfInputs[i], "ForwardMode=") == 0)
+      {
+         inputs.forwardMode = (int)StringToInteger(StringSubstr(listOfInputs[i], StringLen("ForwardMode=")));
+      }
+      else if(StringFind(listOfInputs[i], "Deposit=") == 0)
+      {
+         inputs.deposit = StringToDouble(StringSubstr(listOfInputs[i], StringLen("Deposit=")));
+      }
+      else if(StringFind(listOfInputs[i], "Currency=") == 0)
+      {
+         inputs.currency = StringSubstr(listOfInputs[i], StringLen("Currency="));
+      }
+      else if(StringFind(listOfInputs[i], "ProfitInPips=") == 0)
+      {
+         const string res = StringSubstr(listOfInputs[i], StringLen("ProfitInPips="));
+         if(res == "true" || res == "false" || res == "True" || res == "False")
+         {
+            inputs.profitInPips = (res == "true" || res == "True");
+         }
+         else
+         {
+            inputs.profitInPips = (bool)StringToInteger(res);
+         }
+      }
+      else if(StringFind(listOfInputs[i], "Leverage=") == 0)
+      {
+         inputs.leverage = StringToInteger(StringSubstr(listOfInputs[i], StringLen("Leverage=")));
+      }
+      else if(StringFind(listOfInputs[i], "ExecutionMode=") == 0)
+      {
+         inputs.executionMode = (int)StringToInteger(StringSubstr(listOfInputs[i], StringLen("ExecutionMode=")));
+      }
+      else if(StringFind(listOfInputs[i], "OptimizationCriterion=") == 0)
+      {
+         inputs.optimizationCriterion = (int)StringToInteger(StringSubstr(listOfInputs[i], StringLen("OptimizationCriterion=")));
+      }
+      else if(StringFind(listOfInputs[i], "Visual=") == 0)
+      {
+         const string res = StringSubstr(listOfInputs[i], StringLen("Visual="));
+         if(res == "true" || res == "false" || res == "True" || res == "False")
+         {
+            inputs.visual = (res == "true" || res == "True");
+         }
+         else
+         {
+            inputs.visual = (bool)StringToInteger(res);
+         }
+      }
+   }
+   return true;
 }
 
 //+------------------------------------------------------------------+
@@ -390,7 +695,8 @@ string            CBacktest::timeCurrent(void)
 //+------------------------------------------------------------------+
 string            CBacktest::timeframeSuffix(const ENUM_TIMEFRAMES timeframe)
 {
-   const string timeframeEdit = EnumToString(timeframe);
+   const ENUM_TIMEFRAMES tframe = timeframe == PERIOD_CURRENT ? (ENUM_TIMEFRAMES)Period() : timeframe;
+   const string timeframeEdit = EnumToString(tframe);
 // return last 3 characters
    return StringSubstr(timeframeEdit, StringLen(timeframeEdit) - 3, StringLen(timeframeEdit) - 1);
 }
