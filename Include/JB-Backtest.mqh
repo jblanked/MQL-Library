@@ -16,12 +16,17 @@
 */
 
 #include "fxsaber\Expert.mqh"                              // https://www.mql5.com/en/code/19003
-#include "fxsaber\MultiTester\MTTester.mqh"                // https://www.mql5.com/ru/code/26132
-#include "fxsaber\SingleTesterCache\SingleTesterCache.mqh" // https://www.mql5.com/ru/code/27611
+#include "fxsaber\MultiTester\MTTester.mqh"                // https://www.mql5.com/en/code/26132
+#include "fxsaber\SingleTesterCache\SingleTesterCache.mqh" // https://www.mql5.com/en/code/27611
+#include "fxsaber\TesterCache\TesterCache.mqh"             // https://www.mql5.com/ru/code/26223
 
 #import "shell32.dll"
 int ShellExecuteW(int hWnd, string lpOperation, string lpFile, string lpParameters, string lpDirectory, int nShowCmd);
 #import
+
+#ifndef TESTER_COMMON_PATH
+#define TESTER_COMMON_PATH TerminalInfoString(TERMINAL_COMMONDATA_PATH)
+#endif
 
 struct testerInputs
 {
@@ -103,7 +108,8 @@ public:
    datetime          endDate(void);
    int               getParameters(const string pathToExpert, MqlParamInput &params[]);
    datetime          monthCurrent(void);
-   void              openFolder(void);
+   static bool       moveFile(const string src, const string dest);
+   bool              openFolder(void);
    string            run(const bool openFolder = false, const bool removeTool = false);
    void              save(void);
    string            timeCurrent(void);
@@ -116,7 +122,7 @@ private:
    string            setFileName;
    InputParam        inputParams[];
    bool              inputsAdded;
-
+   string            getExpertName(bool withExtension = false);
    void              loadDefaultParams();
    void              set(const string expertName, const string symbol, const ENUM_TIMEFRAMES timeFrame);
    string            testerInputsToString(const testerInputs &inputs);
@@ -192,13 +198,13 @@ CBacktest::CBacktest(const testerInputs &inputs, bool loadDefaultParameters)
 
    this.i_settings = inputs;
 
-   this.iniFileName = "backtest\\" + inputs.expertName + "-" +
+   this.iniFileName = "backtest\\" + this.getExpertName() + "\\" +
                       inputs.symbol + "-" +
                       this.timeframeSuffix(inputs.timeFrame) + "-" +
                       this.timeCurrent() +
                       ".ini";
 
-   this.setFileName = "backtest\\" + inputs.expertName + "-" +
+   this.setFileName = "backtest\\" + this.getExpertName() + "\\" +
                       inputs.symbol + "-" +
                       this.timeframeSuffix(inputs.timeFrame) + "-" +
                       this.timeCurrent() +
@@ -325,6 +331,32 @@ datetime          CBacktest::endDate(void)
    return (MTTESTER::GetSettings(currentSettings) ? (datetime)MTTESTER::GetValue(currentSettings, "ToDate") : 0);
 }
 
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+string            CBacktest::getExpertName(bool withExtension)
+{
+   int slash = -1;
+   string path = i_settings.expertName;
+   for(int i = StringLen(path); i >= 0; i--)
+   {
+      if(path[i] == 92)
+      {
+         slash = i;
+         break;
+      }
+   }
+   if(slash == -1)
+   {
+      Alert("Failed to find last slash!");
+      return "";
+   }
+
+   string ex5 = StringSubstr(path, slash + 1);
+   return withExtension ? ex5 : StringSubstr(ex5, 0, StringFind(ex5, ".ex5"));
+}
+
 //+------------------------------------------------------------------+
 //| Get parameters from an expert advisor                            |
 //+------------------------------------------------------------------+
@@ -427,18 +459,26 @@ datetime          CBacktest::monthCurrent(void)
 }
 
 //+------------------------------------------------------------------+
-//| Open a folder                                                    |
+//| Move a file from src to dest
 //+------------------------------------------------------------------+
-void              CBacktest::openFolder(void)
+static bool        CBacktest::moveFile(const string src, const string dest)
 {
-   ShellExecuteW(
-      0,
-      "open",
-      "cmd.exe",
-      "/c start " + TerminalInfoString(TERMINAL_COMMONDATA_PATH) + "\\Files\\" + "backtest",
-      NULL,
-      0
-   );
+   return ShellExecuteW(0, "open", "cmd.exe", StringFormat("/C move /Y \"%s\" \"%s\"", src, dest), NULL, 0) > 32;
+}
+
+//+------------------------------------------------------------------+
+//| Open the folder where settings and results are saved             |
+//+------------------------------------------------------------------+
+bool              CBacktest::openFolder(void)
+{
+   return ShellExecuteW(
+             0,
+             "open",
+             "cmd.exe",
+             StringFormat("/c start %s\\Files\\backtest", TESTER_COMMON_PATH),
+             NULL,
+             0
+          ) > 32;
 }
 
 //+------------------------------------------------------------------+
@@ -464,22 +504,52 @@ string              CBacktest::run(const bool openFolder = false, const bool rem
 
    uchar Bytes2[];
    string res = "";
-   if (MTTESTER::GetLastTstCache(Bytes2) != -1) // If it was possible to read the last cache record of a single run
+   const string expertName = getExpertName();
+   if(!this.i_settings.optimization)
    {
-      const SINGLETESTERCACHE SingleTesterCache(Bytes2); // Drive it into the corresponding object.
-
-      const string FileName = "Report.htm";
-      uchar Array[];
-      res = SingleTesterCache.Summary.ToString();
-      if (!(StringToCharArray(res, Array) > 0) || !FileSave(FileName, Array))
+      if (MTTESTER::GetLastTstCache(Bytes2) != -1) // If it was possible to read the last cache record of a single run
       {
-         Print("Failed to save report to " + TerminalInfoString(TERMINAL_COMMONDATA_PATH) + "\\Files\\" + FileName);
+         const SINGLETESTERCACHE SingleTesterCache(Bytes2); // Drive it into the corresponding object.
+         const string fileName = StringFormat("backtest\\%s\\single-test.txt", expertName);
+         uchar Array[];
+         res = SingleTesterCache.Summary.ToString();
+         if (!(StringToCharArray(res, Array) > 0) || !FileSave(fileName, Array, FILE_READ | FILE_WRITE | FILE_COMMON | FILE_BIN))
+         {
+            PrintFormat("Failed to save single-test report to %s%s", TESTER_COMMON_PATH, fileName);
+         }
+      }
+   }
+   else
+   {
+      if (MTTESTER::GetLastOptCache(Bytes2) != -1) // If it was possible to read the last cache record of a single run
+      {
+         const TESTERCACHE<ExpTradeSummary> OptimizationCache(Bytes2); // Drive it into the corresponding object.
+         uchar Array[];
+         res = OptimizationCache.Header.ToString();
+         // add each test result
+         const int passes = OptimizationCache.GetAmount();
+         for(int i = 0; i < passes; i++)
+         {
+            string toSave = OptimizationCache[i].ToString();
+            StringReplace(toSave, ";", "");
+            res += StringFormat("\n%s", toSave);
+            string optiFileName = StringFormat("%s-pass-%d.txt", expertName, i);
+            OptimizationCache.SaveSet(i, optiFileName);
+            string ogLocation = StringFormat("%s\\MQL5\\Files\\%s", TerminalInfoString(TERMINAL_DATA_PATH), optiFileName);
+            string newLocation = StringFormat("%s\\Files\\backtest\\%s\\%s", TESTER_COMMON_PATH, expertName, optiFileName);
+            moveFile(ogLocation, newLocation);
+         }
+         const string fileName = StringFormat("backtest\\%s\\optimization.txt", expertName);
+         if (!(StringToCharArray(res, Array) > 0) || !FileSave(fileName, Array, FILE_READ | FILE_WRITE | FILE_COMMON | FILE_BIN))
+         {
+            PrintFormat("Failed to save optimization report to %s%s", TESTER_COMMON_PATH, fileName);
+         }
       }
    }
 
-   if(openFolder)
+   if(openFolder && !this.openFolder())
    {
-      this.openFolder();
+      PrintFormat("Results saved but failed to open folder!\nNavigate to %s", StringFormat("%s\\Files\\backtest\\%s", TESTER_COMMON_PATH, expertName));
    }
 
    if(removeTool)
@@ -497,12 +567,19 @@ void              CBacktest::save(void)
 {
    if(this.m_settings == "") return;
 
-   string testInputData = testerInputsToString(this.i_settings);
+   if(!FolderCreate(StringFormat("Files\\backtest\\%s", getExpertName()), FILE_COMMON))
+   {
+      PrintFormat("Failed to create folder for results, error %d", GetLastError());
+      return;
+   }
 
+   string testInputData = testerInputsToString(this.i_settings);
+   FileDelete(this.iniFileName, FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_BIN);
    int fileHandle = FileOpen(this.iniFileName, FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_BIN);
    FileWriteString(fileHandle, testInputData + this.m_settings);
    FileClose(fileHandle);
 
+   FileDelete(this.setFileName, FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_BIN);
    int fileHandle2 = FileOpen(this.setFileName, FILE_READ | FILE_REWRITE | FILE_WRITE | FILE_COMMON | FILE_BIN);
    string settingsCopy = testInputData + this.m_settings;
    if(StringFind(this.m_settings, "[TesterInputs]") == 0)
