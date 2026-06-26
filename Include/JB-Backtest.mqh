@@ -92,7 +92,7 @@ public:
    template <typename T>
    void              addOptimizationSetting(const string inputVariable, T value, T valueStart, T valueStep, T valueStop, const bool checked = false);
    template <typename T>
-   void              addSetting(const string inputVariable, T tempValue);
+   void              addSetting(const string inputVariable, T value);
    bool              ask(
       const bool openFolder = false,
       const string message = "Would you like to run a backtest of your current settings? (Note: Not recommended on a VPS)",
@@ -227,7 +227,7 @@ void              CBacktest::addOptimizationSetting(const string inputVariable, 
    {
       if(this.inputParams[i].name == inputVariable)
       {
-         this.inputParams[i].value = (string)tempValue;
+         this.inputParams[i].value = (string)value;
          return;
       }
    }
@@ -240,14 +240,14 @@ void              CBacktest::addOptimizationSetting(const string inputVariable, 
    }
 
    this.inputParams[newSize - 1].name  = inputVariable;
-   this.inputParams[newSize - 1].value = StringFormat("%s||%s||%s||%s||%s", (string)value, (string)valueStart, (string)valueStop, checked ? "Y" : "N");
+   this.inputParams[newSize - 1].value = StringFormat("%s||%s||%s||%s||%s", (string)value, (string)valueStart, (string)valueStep, (string)valueStop, checked ? "Y" : "N");
 }
 
 //+------------------------------------------------------------------+
 //| Add an input to the testing config                               |
 //+------------------------------------------------------------------+
 template <typename T>
-void              CBacktest::addSetting(const string inputVariable, T tempValue)
+void              CBacktest::addSetting(const string inputVariable, T value)
 {
    if(!inputsAdded)
    {
@@ -260,7 +260,7 @@ void              CBacktest::addSetting(const string inputVariable, T tempValue)
    {
       if(this.inputParams[i].name == inputVariable)
       {
-         this.inputParams[i].value = (string)tempValue;
+         this.inputParams[i].value = (string)value;
          return;
       }
    }
@@ -273,7 +273,7 @@ void              CBacktest::addSetting(const string inputVariable, T tempValue)
    }
 
    this.inputParams[newSize - 1].name  = inputVariable;
-   this.inputParams[newSize - 1].value = (string)tempValue;
+   this.inputParams[newSize - 1].value = (string)value;
 }
 
 //+------------------------------------------------------------------+
