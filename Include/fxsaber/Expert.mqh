@@ -113,6 +113,24 @@ private:
     return(Amount);
   }
 
+  // Expert base name from path
+  static string GetName( const string Path )
+  {
+    int LastSlash = -1;
+
+    for (int i = ::StringLen(Path); i >= 0; i--)
+      if (Path[i] == 92)
+      {
+        LastSlash = i;
+        break;
+      }
+
+    string FileName = (LastSlash >= 0) ? ::StringSubstr(Path, LastSlash + 1) : Path;
+    const int Ext = ::StringFind(FileName, ".ex5");
+
+    return((Ext > 0) ? ::StringSubstr(FileName, 0, Ext) : FileName);
+  }
+
 public:
   // ������� �� �������� �� ��������������� �����?
   static bool Is( const long Chart_ID = 0 )
@@ -222,7 +240,7 @@ public:
         }
         else if (FirstRun)
         {
-          const string StrNew = EXPERT_BEGIN + EXPERT_NAME + Parameters[0].string_value + STRING_END +
+          const string StrNew = EXPERT_BEGIN + EXPERT_NAME + EXPERT::GetName(Parameters[0].string_value) + STRING_END +
                                 EXPERT_PATH + Parameters[0].string_value + STRING_END + EXPERT_END;
 
           FirstRun = false;
@@ -241,7 +259,7 @@ public:
       else if (FirstRun)
       {
         StrTemplate = EXPERT::StringBetween2(StrTemplate, NULL, EXPERT_CHART_BEGIN) +
-                      EXPERT_BEGIN + EXPERT_NAME + Parameters[0].string_value + STRING_END +
+                      EXPERT_BEGIN + EXPERT_NAME + EXPERT::GetName(Parameters[0].string_value) + STRING_END +
                       EXPERT_PATH + Parameters[0].string_value + STRING_END + EXPERT_END + StrTemplate;
 
         FirstRun = false;
